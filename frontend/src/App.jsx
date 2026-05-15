@@ -4,6 +4,9 @@ import Footer from './components/layout/Footer'
 import Hero from './components/sections/Hero'
 import CredentialsStrip from './components/sections/CredentialsStrip'
 import WhatIsSwaqar from './components/sections/WhatIsSwaqar'
+import CorridorAtlas from './components/sections/CorridorAtlas'
+import ControlPipeline from './components/sections/ControlPipeline'
+import ControlGate from './components/sections/ControlGate'
 
 const App = () => {
   return (
@@ -13,6 +16,9 @@ const App = () => {
         <Hero />
         <CredentialsStrip />
         <WhatIsSwaqar />
+        <ControlPipeline />
+        <ControlGate />
+        <CorridorAtlas />
       </main>
       <Footer />
     </div>
