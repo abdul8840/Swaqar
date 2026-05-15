@@ -1,0 +1,178 @@
+@import "tailwindcss";
+
+@theme {
+  --color-gold: #C9A84C;
+  --color-gold-light: #E8C97A;
+  --color-gold-dim: #8B6914;
+  --color-charcoal: #0E0E0F;
+  --color-charcoal-2: #141416;
+  --color-charcoal-3: #1A1A1D;
+  --color-charcoal-4: #212126;
+  --color-charcoal-5: #2A2A30;
+  --color-surface: #1C1C21;
+  --color-surface-2: #232329;
+  --color-border: #2E2E36;
+  --color-border-gold: #C9A84C33;
+  --color-text-primary: #E8E6E0;
+  --color-text-secondary: #A8A49C;
+  --color-text-muted: #6B6760;
+  --color-text-gold: #C9A84C;
+  --color-rejected: #3D1A1A;
+  --color-rejected-border: #6B2020;
+  --color-approved: #1A2D1A;
+  --color-approved-border: #2D5A2D;
+  --font-cinzel: 'Cinzel', serif;
+  --font-cormorant: 'Cormorant Garamond', serif;
+  --font-inter: 'Inter', sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+  background-color: #0E0E0F;
+}
+
+body {
+  font-family: 'Inter', sans-serif;
+  background-color: #0E0E0F;
+  color: #E8E6E0;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+::-webkit-scrollbar {
+  width: 4px;
+}
+
+::-webkit-scrollbar-track {
+  background: #0E0E0F;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #C9A84C44;
+  border-radius: 2px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #C9A84C;
+}
+
+.font-cinzel { font-family: 'Cinzel', serif; }
+.font-cormorant { font-family: 'Cormorant Garamond', serif; }
+.font-inter { font-family: 'Inter', sans-serif; }
+.font-mono { font-family: 'JetBrains Mono', monospace; }
+
+.text-gold { color: #C9A84C; }
+.text-gold-light { color: #E8C97A; }
+.text-gold-dim { color: #8B6914; }
+.border-gold { border-color: #C9A84C; }
+.border-gold-dim { border-color: #C9A84C33; }
+
+.bg-charcoal { background-color: #0E0E0F; }
+.bg-charcoal-2 { background-color: #141416; }
+.bg-charcoal-3 { background-color: #1A1A1D; }
+.bg-charcoal-4 { background-color: #212126; }
+.bg-surface { background-color: #1C1C21; }
+.bg-surface-2 { background-color: #232329; }
+
+.noise-texture {
+  position: relative;
+}
+
+.noise-texture::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+  opacity: 0.04;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.gold-glow {
+  filter: drop-shadow(0 0 8px #C9A84C66);
+}
+
+.gold-text-glow {
+  text-shadow: 0 0 20px #C9A84C44, 0 0 40px #C9A84C22;
+}
+
+.section-divider {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, #C9A84C22, #C9A84C44, #C9A84C22, transparent);
+}
+
+@keyframes pulse-gold {
+  0%, 100% { opacity: 1; box-shadow: 0 0 0 0 #C9A84C44; }
+  50% { opacity: 0.8; box-shadow: 0 0 0 8px transparent; }
+}
+
+@keyframes flow-packet {
+  0% { offset-distance: 0%; opacity: 0; }
+  10% { opacity: 1; }
+  90% { opacity: 1; }
+  100% { offset-distance: 100%; opacity: 0; }
+}
+
+@keyframes radar-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes data-stream {
+  0% { transform: translateY(-100%); opacity: 0; }
+  50% { opacity: 1; }
+  100% { transform: translateY(100%); opacity: 0; }
+}
+
+@keyframes node-pulse {
+  0%, 100% { r: 4; opacity: 1; }
+  50% { r: 6; opacity: 0.7; }
+}
+
+@keyframes corridor-flow {
+  0% { stroke-dashoffset: 1000; }
+  100% { stroke-dashoffset: 0; }
+}
+
+@keyframes shimmer {
+  0% { background-position: -1000px 0; }
+  100% { background-position: 1000px 0; }
+}
+
+.animate-pulse-gold {
+  animation: pulse-gold 2s infinite;
+}
+
+.animate-radar {
+  animation: radar-spin 4s linear infinite;
+}
+
+.hover-lift {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.hover-lift:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 32px #C9A84C11;
+}
+
+.institutional-border {
+  border: 1px solid #2E2E36;
+  border-top: 1px solid #C9A84C22;
+}
+
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus {
+  -webkit-box-shadow: 0 0 0px 1000px #1C1C21 inset;
+  -webkit-text-fill-color: #E8E6E0;
+  transition: background-color 5000s ease-in-out 0s;
+}
