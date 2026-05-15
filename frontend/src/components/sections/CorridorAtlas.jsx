@@ -1,501 +1,1361 @@
-// CorridorAtlas.jsx
-// Production-grade React + Tailwind + Framer Motion component
-// Install:
-// npm install framer-motion react-simple-maps
+import React, { useState, useEffect, useRef } from "react";
+import MapImg from "../../assets/map.png";
 
-import { motion } from "framer-motion";
-import {
-  ComposableMap,
-  Geographies,
-  Geography,
-  Line,
-  Marker,
-} from "react-simple-maps";
+// ============================================================
+// CONSTANTS & DATA
+// ============================================================
 
-const geoUrl =
-  "https://raw.githubusercontent.com/deldersveld/topojson/master/world-countries.json";
+const MAP_IMAGE = MapImg;
 
-const africanNodes = [
+// Node positions as percentages of map container (tweaked to match map geography)
+const ORIGIN_NODES = [
   {
-    name: "Yaoundé",
-    country: "Cameroon",
-    coordinates: [11.5167, 3.8667],
+    id: "yaounde",
+    label: "YAOUNDÉ",
+    sub: "Cameroon",
+    xPct: 38.5,
+    yPct: 62.5,
   },
   {
-    name: "Douala",
-    country: "Cameroon",
-    coordinates: [9.7043, 4.0511],
+    id: "douala",
+    label: "DOUALA",
+    sub: "Cameroon",
+    xPct: 35.0,
+    yPct: 61.0,
   },
   {
-    name: "Lagos",
-    country: "Nigeria",
-    coordinates: [3.3792, 6.5244],
-  },
-];
-
-const middleEastNodes = [
-  {
-    name: "Riyadh",
-    country: "Saudi Arabia",
-    coordinates: [46.6753, 24.7136],
-  },
-  {
-    name: "Dubai",
-    country: "UAE",
-    coordinates: [55.2708, 25.2048],
-  },
-  {
-    name: "Jeddah",
-    country: "Saudi Arabia",
-    coordinates: [39.1925, 21.4858],
+    id: "lagos",
+    label: "LAGOS",
+    sub: "Nigeria",
+    xPct: 31.8,
+    yPct: 55.5,
   },
 ];
 
-const connections = [
-  ["Yaoundé", "Riyadh"],
-  ["Yaoundé", "Dubai"],
-  ["Yaoundé", "Jeddah"],
-  ["Douala", "Riyadh"],
-  ["Douala", "Dubai"],
-  ["Lagos", "Riyadh"],
+const DEST_NODES = [
+  {
+    id: "riyadh",
+    label: "RIYADH",
+    sub: "Saudi Arabia",
+    xPct: 74.5,
+    yPct: 20.0,
+  },
+  {
+    id: "dubai",
+    label: "DUBAI",
+    sub: "UAE",
+    xPct: 84.5,
+    yPct: 19.5,
+  },
+  {
+    id: "jeddah",
+    label: "JEDDAH",
+    sub: "Saudi Arabia",
+    xPct: 68.5,
+    yPct: 30.5,
+  },
 ];
 
-const getNode = (name) => {
-  return [...africanNodes, ...middleEastNodes].find(
-    (n) => n.name === name
+const ACTIVE_CORRIDORS = [
+  { from: "lagos", to: "riyadh", travelers: 3, duration: 4.5 },
+  { from: "douala", to: "jeddah", travelers: 3, duration: 5.0 },
+  { from: "yaounde", to: "dubai", travelers: 3, duration: 5.5 },
+  { from: "yaounde", to: "riyadh", travelers: 2, duration: 4.8 },
+  { from: "lagos", to: "jeddah", travelers: 2, duration: 4.2 },
+];
+
+const POTENTIAL_CORRIDORS = [
+  { from: "douala", to: "riyadh" },
+  { from: "yaounde", to: "jeddah" },
+];
+
+const FOOTER_ITEMS = [
+  {
+    icon: "shield",
+    title: "VERIFIED",
+    sub: "Multi-layer validation",
+  },
+  {
+    icon: "hammer",
+    title: "COORDINATED",
+    sub: "Structured execution",
+  },
+  {
+    icon: "lock",
+    title: "GOVERNED",
+    sub: "Rules. Compliance. Trust.",
+  },
+  {
+    icon: "check",
+    title: "NON-CUSTODIAL",
+    sub: "We do not hold funds or goods",
+  },
+];
+
+// ============================================================
+// UTILITY FUNCTIONS
+// ============================================================
+
+function getNodeById(id) {
+  return (
+    ORIGIN_NODES.find((n) => n.id === id) ||
+    DEST_NODES.find((n) => n.id === id)
   );
-};
+}
+
+function pctToSvg(xPct, yPct, W, H) {
+  return { x: (xPct / 100) * W, y: (yPct / 100) * H };
+}
+
+function buildCurvedPath(x1, y1, x2, y2) {
+  const dx = x2 - x1;
+  const dy = y2 - y1;
+  const cx1 = x1 + dx * 0.3;
+  const cy1 = y1 - Math.abs(dy) * 0.45;
+  const cx2 = x1 + dx * 0.7;
+  const cy2 = y2 - Math.abs(dy) * 0.2;
+  return `M ${x1} ${y1} C ${cx1} ${cy1} ${cx2} ${cy2} ${x2} ${y2}`;
+}
+
+// ============================================================
+// SUB-COMPONENTS
+// ============================================================
+
+// ── Animated SVG Icons ──────────────────────────────────────
+
+function IconShield() {
+  return (
+    <svg
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="#d4a017"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M12 2L4 6v6c0 5.25 3.5 9.74 8 11 4.5-1.26 8-5.75 8-11V6l-8-4z" />
+      <polyline points="9,12 11,14 15,10" />
+    </svg>
+  );
+}
+
+function IconHammer() {
+  return (
+    <svg
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="#d4a017"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M15 12l-8.5 8.5a1.5 1.5 0 01-2-2L13 10" />
+      <path d="M14 6l4 4" />
+      <path d="M18 2l4 4-1.5 1.5-4-4L18 2z" />
+      <path d="M10 4L8 6l2 2" />
+    </svg>
+  );
+}
+
+function IconLock() {
+  return (
+    <svg
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="#d4a017"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+      <path d="M7 11V7a5 5 0 0110 0v4" />
+      <circle cx="12" cy="16" r="1" fill="#d4a017" />
+    </svg>
+  );
+}
+
+function IconCheckCircle() {
+  return (
+    <svg
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="#d4a017"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <circle cx="12" cy="12" r="10" />
+      <polyline points="9,12 11,14 15,10" />
+    </svg>
+  );
+}
+
+function IconGlobe() {
+  return (
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="#d4a017"
+      strokeWidth="1.6"
+      strokeLinecap="round"
+    >
+      <circle cx="12" cy="12" r="10" />
+      <ellipse cx="12" cy="12" rx="4" ry="10" />
+      <line x1="2" y1="12" x2="22" y2="12" />
+      <line x1="12" y1="2" x2="12" y2="22" strokeDasharray="2 4" />
+    </svg>
+  );
+}
+
+function getFooterIcon(icon) {
+  switch (icon) {
+    case "shield":
+      return <IconShield />;
+    case "hammer":
+      return <IconHammer />;
+    case "lock":
+      return <IconLock />;
+    case "check":
+      return <IconCheckCircle />;
+    default:
+      return null;
+  }
+}
+
+// ── Telemetry Bars ──────────────────────────────────────────
+
+function TelemetryBars() {
+  const heights = [8, 14, 10, 18, 12, 16, 9];
+  return (
+    <div className="flex items-end gap-[2px] h-5">
+      {heights.map((h, i) => (
+        <div
+          key={i}
+          className="w-[3px] bg-[#d4a017] rounded-sm origin-bottom"
+          style={{
+            height: `${h}px`,
+            animation: `telemetryBar 1.2s ease-in-out ${i * 0.15}s infinite`,
+          }}
+        />
+      ))}
+    </div>
+  );
+}
+
+// ── Node List Item ──────────────────────────────────────────
+
+function NodeListItem({ node, color, isActive, delay, onHover, onLeave }) {
+  const isGreen = color === "green";
+  return (
+    <div
+      className="flex items-center gap-2.5 mb-3 cursor-pointer group"
+      style={{ animation: `slideInLeft 0.5s ease-out ${delay}s both` }}
+      onMouseEnter={() => onHover(node.id)}
+      onMouseLeave={onLeave}
+    >
+      {/* Ring indicator */}
+      <div className="relative flex-shrink-0 w-5 h-5 flex items-center justify-center">
+        <div
+          className={`absolute rounded-full border ${
+            isGreen ? "border-green-400" : "border-yellow-400"
+          }`}
+          style={{
+            width: 18,
+            height: 18,
+            animation: `pulseRing 2.5s ease-out ${delay}s infinite`,
+            opacity: 0.4,
+          }}
+        />
+        <div
+          className={`absolute rounded-full border ${
+            isGreen ? "border-green-400" : "border-yellow-400"
+          }`}
+          style={{
+            width: 26,
+            height: 26,
+            animation: `pulseRing 2.5s ease-out ${delay + 0.4}s infinite`,
+            opacity: 0.2,
+          }}
+        />
+        <div
+          className={`w-3 h-3 rounded-full border-2 relative z-10 transition-transform duration-300 group-hover:scale-125 ${
+            isGreen
+              ? "bg-green-500 border-green-300"
+              : "bg-yellow-500 border-yellow-300"
+          }`}
+          style={{
+            boxShadow: isGreen
+              ? "0 0 8px #22c55e, 0 0 16px #22c55e66"
+              : "0 0 8px #d4a017, 0 0 16px #d4a01766",
+          }}
+        />
+      </div>
+      <div>
+        <p
+          className={`text-[10px] font-bold tracking-wider transition-colors duration-200 ${
+            isActive
+              ? isGreen
+                ? "text-green-400"
+                : "text-yellow-400"
+              : "text-white"
+          }`}
+        >
+          {node.label}
+        </p>
+        <p className="text-[9px] text-gray-500">{node.sub}</p>
+      </div>
+    </div>
+  );
+}
+
+// ── Metric Row ──────────────────────────────────────────────
+
+function MetricRow({ label, value, isLive, delay }) {
+  return (
+    <div
+      className="flex justify-between items-center py-1.5 border-b border-white/5"
+      style={{ animation: `fadeIn 0.5s ease-out ${delay}s both` }}
+    >
+      <span className="text-[8px] md:text-[9px] tracking-wider text-gray-400 uppercase">
+        {label}
+      </span>
+      {isLive ? (
+        <span
+          className="text-[10px] font-bold text-green-400"
+          style={{ animation: "blink 1.4s ease-in-out infinite" }}
+        >
+          LIVE
+        </span>
+      ) : (
+        <span className="text-[10px] font-bold text-white tabular-nums">
+          {value}
+        </span>
+      )}
+    </div>
+  );
+}
+
+// ── Legend Item ─────────────────────────────────────────────
+
+function LegendItem({ type, label }) {
+  return (
+    <div className="flex items-center gap-2 mb-2">
+      {type === "solid" ? (
+        <svg width="32" height="10" className="flex-shrink-0">
+          <defs>
+            <linearGradient id="legendGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stopColor="#22c55e" />
+              <stop offset="100%" stopColor="#d4a017" />
+            </linearGradient>
+          </defs>
+          <line
+            x1="0"
+            y1="5"
+            x2="26"
+            y2="5"
+            stroke="url(#legendGrad)"
+            strokeWidth="1.8"
+          />
+          <polygon points="24,2 32,5 24,8" fill="#d4a017" />
+        </svg>
+      ) : (
+        <svg width="32" height="10" className="flex-shrink-0">
+          <line
+            x1="0"
+            y1="5"
+            x2="32"
+            y2="5"
+            stroke="#d4a01788"
+            strokeWidth="1.5"
+            strokeDasharray="4 3"
+          />
+        </svg>
+      )}
+      <span className="text-[8px] tracking-[0.12em] text-gray-400 uppercase">
+        {label}
+      </span>
+    </div>
+  );
+}
+
+// ── Footer Pillar ───────────────────────────────────────────
+
+function FooterPillar({ item, delay }) {
+  return (
+    <div
+      className="flex items-center gap-2 md:gap-3 group"
+      style={{ animation: `slideInUp 0.6s ease-out ${delay}s both` }}
+    >
+      <div className="flex-shrink-0 transition-transform duration-300 group-hover:scale-110 group-hover:drop-shadow-[0_0_8px_#d4a017]">
+        {getFooterIcon(item.icon)}
+      </div>
+      <div>
+        <p className="text-[9px] md:text-[10px] font-bold tracking-[0.14em] text-white">
+          {item.title}
+        </p>
+        <p className="text-[8px] md:text-[9px] text-gray-500 mt-0.5">
+          {item.sub}
+        </p>
+      </div>
+    </div>
+  );
+}
+
+// ============================================================
+// MAP SVG OVERLAY
+// ============================================================
+
+function MapOverlay({ hoveredNode, setHoveredNode, mapSize }) {
+  const W = mapSize.width || 800;
+  const H = mapSize.height || 500;
+
+  // Convert node percentages to SVG pixels
+  const allNodes = [...ORIGIN_NODES, ...DEST_NODES].map((n) => ({
+    ...n,
+    ...pctToSvg(n.xPct, n.yPct, W, H),
+  }));
+
+  const originSvg = ORIGIN_NODES.map((n) => ({
+    ...n,
+    ...pctToSvg(n.xPct, n.yPct, W, H),
+  }));
+  const destSvg = DEST_NODES.map((n) => ({
+    ...n,
+    ...pctToSvg(n.xPct, n.yPct, W, H),
+  }));
+
+  function getNodeSvg(id) {
+    return allNodes.find((n) => n.id === id);
+  }
+
+  const activePathData = ACTIVE_CORRIDORS.map((c, i) => {
+    const from = getNodeSvg(c.from);
+    const to = getNodeSvg(c.to);
+    if (!from || !to) return null;
+    return {
+      ...c,
+      id: `ac-${i}`,
+      d: buildCurvedPath(from.x, from.y, to.x, to.y),
+      from,
+      to,
+    };
+  }).filter(Boolean);
+
+  const potentialPathData = POTENTIAL_CORRIDORS.map((c, i) => {
+    const from = getNodeSvg(c.from);
+    const to = getNodeSvg(c.to);
+    if (!from || !to) return null;
+    return {
+      ...c,
+      id: `pc-${i}`,
+      d: buildCurvedPath(from.x, from.y, to.x, to.y),
+    };
+  }).filter(Boolean);
+
+  return (
+    <svg
+      width={W}
+      height={H}
+      viewBox={`0 0 ${W} ${H}`}
+      className="absolute inset-0 pointer-events-none"
+      style={{ zIndex: 5 }}
+    >
+      <defs>
+        {/* Glow filters */}
+        <filter id="glowGold" x="-60%" y="-60%" width="220%" height="220%">
+          <feGaussianBlur stdDeviation="3.5" result="blur" />
+          <feMerge>
+            <feMergeNode in="blur" />
+            <feMergeNode in="SourceGraphic" />
+          </feMerge>
+        </filter>
+        <filter id="glowGoldStrong" x="-80%" y="-80%" width="260%" height="260%">
+          <feGaussianBlur stdDeviation="7" result="blur" />
+          <feMerge>
+            <feMergeNode in="blur" />
+            <feMergeNode in="SourceGraphic" />
+          </feMerge>
+        </filter>
+        <filter id="glowGreen" x="-60%" y="-60%" width="220%" height="220%">
+          <feGaussianBlur stdDeviation="4" result="blur" />
+          <feMerge>
+            <feMergeNode in="blur" />
+            <feMergeNode in="SourceGraphic" />
+          </feMerge>
+        </filter>
+        <filter id="glowGreenStrong" x="-80%" y="-80%" width="260%" height="260%">
+          <feGaussianBlur stdDeviation="8" result="blur" />
+          <feMerge>
+            <feMergeNode in="blur" />
+            <feMergeNode in="SourceGraphic" />
+          </feMerge>
+        </filter>
+
+        {/* Corridor gradient */}
+        <linearGradient id="corrGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%" stopColor="#22c55e" stopOpacity="0.9" />
+          <stop offset="50%" stopColor="#d4a017" stopOpacity="0.9" />
+          <stop offset="100%" stopColor="#d4a017" stopOpacity="0.9" />
+        </linearGradient>
+
+        {/* Origin node glow */}
+        <radialGradient id="originAura" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stopColor="#22c55e" stopOpacity="0.35" />
+          <stop offset="100%" stopColor="#22c55e" stopOpacity="0" />
+        </radialGradient>
+        <radialGradient id="destAura" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stopColor="#d4a017" stopOpacity="0.35" />
+          <stop offset="100%" stopColor="#d4a017" stopOpacity="0" />
+        </radialGradient>
+
+        {/* Path defs for animateMotion */}
+        {activePathData.map((p) => (
+          <path key={`def-${p.id}`} id={`pathdef-${p.id}`} d={p.d} />
+        ))}
+      </defs>
+
+      {/* ── Potential corridors ── */}
+      {potentialPathData.map((p) => (
+        <g key={p.id}>
+          <path
+            d={p.d}
+            fill="none"
+            stroke="#d4a017"
+            strokeWidth="1.2"
+            strokeDasharray="5 7"
+            opacity="0.3"
+            style={{ animation: "dashFlow 2s linear infinite" }}
+          />
+        </g>
+      ))}
+
+      {/* ── Active corridors ── */}
+      {activePathData.map((p, i) => {
+        const isHov =
+          hoveredNode === p.from?.id || hoveredNode === p.to?.id;
+        return (
+          <g key={p.id}>
+            {/* Wide glow */}
+            <path
+              d={p.d}
+              fill="none"
+              stroke="#d4a017"
+              strokeWidth={isHov ? 10 : 7}
+              opacity={isHov ? 0.15 : 0.08}
+              filter="url(#glowGoldStrong)"
+              style={{ transition: "all 0.4s" }}
+            />
+            {/* Medium glow */}
+            <path
+              d={p.d}
+              fill="none"
+              stroke="#d4a017"
+              strokeWidth={isHov ? 4 : 3}
+              opacity={isHov ? 0.35 : 0.2}
+              filter="url(#glowGold)"
+              style={{ transition: "all 0.4s" }}
+            />
+            {/* Core line */}
+            <path
+              id={`path-${p.id}`}
+              d={p.d}
+              fill="none"
+              stroke="#d4a017"
+              strokeWidth={isHov ? 2.2 : 1.6}
+              opacity={isHov ? 1 : 0.75}
+              style={{
+                transition: "all 0.4s",
+                animation: `corridorPulse 3s ease-in-out ${i * 0.4}s infinite`,
+              }}
+            />
+
+            {/* Traveling bright particles */}
+            {Array.from({ length: p.travelers || 2 }).map((_, j) => (
+              <g key={j} filter="url(#glowGold)">
+                <circle r="2.8" fill="#ffd700" opacity="0.9">
+                  <animateMotion
+                    dur={`${p.duration + j * 0.5}s`}
+                    begin={`${j * (p.duration / (p.travelers || 2))}s`}
+                    repeatCount="indefinite"
+                    calcMode="spline"
+                    keySplines="0.4 0 0.6 1"
+                  >
+                    <mpath href={`#pathdef-${p.id}`} />
+                  </animateMotion>
+                </circle>
+                <circle r="1.4" fill="#ffffff" opacity="0.8">
+                  <animateMotion
+                    dur={`${p.duration + j * 0.5}s`}
+                    begin={`${j * (p.duration / (p.travelers || 2))}s`}
+                    repeatCount="indefinite"
+                  >
+                    <mpath href={`#pathdef-${p.id}`} />
+                  </animateMotion>
+                </circle>
+              </g>
+            ))}
+
+            {/* Plane icon */}
+            <PlaneOnPath pathId={`pathdef-${p.id}`} delay={i * 0.8} dur={p.duration * 1.6} />
+          </g>
+        );
+      })}
+
+      {/* ── Origin Nodes (Green) ── */}
+      {originSvg.map((node, i) => {
+        const isHov = hoveredNode === node.id;
+        return (
+          <g
+            key={node.id}
+            style={{ pointerEvents: "all", cursor: "pointer" }}
+            onMouseEnter={() => setHoveredNode(node.id)}
+            onMouseLeave={() => setHoveredNode(null)}
+          >
+            {/* Aura */}
+            <circle
+              cx={node.x}
+              cy={node.y}
+              r="35"
+              fill="url(#originAura)"
+              opacity={isHov ? 0.8 : 0.5}
+              style={{ transition: "opacity 0.3s" }}
+            />
+            {/* Pulse ring 1 */}
+            <circle
+              cx={node.x}
+              cy={node.y}
+              r="11"
+              fill="none"
+              stroke="#22c55e"
+              strokeWidth="1"
+              opacity="0.6"
+              style={{
+                animation: `pulseRingNode 2.6s ease-out ${i * 0.45}s infinite`,
+                transformOrigin: `${node.x}px ${node.y}px`,
+              }}
+            />
+            {/* Pulse ring 2 */}
+            <circle
+              cx={node.x}
+              cy={node.y}
+              r="17"
+              fill="none"
+              stroke="#22c55e"
+              strokeWidth="0.6"
+              opacity="0.35"
+              style={{
+                animation: `pulseRingNode 2.6s ease-out ${i * 0.45 + 0.55}s infinite`,
+                transformOrigin: `${node.x}px ${node.y}px`,
+              }}
+            />
+            {/* Pulse ring 3 */}
+            <circle
+              cx={node.x}
+              cy={node.y}
+              r="24"
+              fill="none"
+              stroke="#22c55e"
+              strokeWidth="0.4"
+              opacity="0.18"
+              style={{
+                animation: `pulseRingNode 2.6s ease-out ${i * 0.45 + 1.0}s infinite`,
+                transformOrigin: `${node.x}px ${node.y}px`,
+              }}
+            />
+            {/* Outer ring static */}
+            <circle
+              cx={node.x}
+              cy={node.y}
+              r={isHov ? 9 : 7}
+              fill="#22c55e"
+              opacity="0.2"
+              filter="url(#glowGreenStrong)"
+              style={{ transition: "r 0.25s" }}
+            />
+            {/* Core dot */}
+            <circle
+              cx={node.x}
+              cy={node.y}
+              r={isHov ? 6.5 : 5}
+              fill="#22c55e"
+              filter="url(#glowGreen)"
+              style={{
+                transition: "r 0.25s",
+                animation: `nodeGlowGreen 2.5s ease-in-out ${i * 0.3}s infinite`,
+              }}
+            />
+            {/* Inner bright */}
+            <circle
+              cx={node.x}
+              cy={node.y}
+              r={isHov ? 3 : 2.2}
+              fill="#a7f3d0"
+              style={{ transition: "r 0.25s" }}
+            />
+
+            {/* Label card */}
+            <OriginLabel node={node} isHov={isHov} />
+          </g>
+        );
+      })}
+
+      {/* ── Destination Nodes (Gold) ── */}
+      {destSvg.map((node, i) => {
+        const isHov = hoveredNode === node.id;
+        return (
+          <g
+            key={node.id}
+            style={{ pointerEvents: "all", cursor: "pointer" }}
+            onMouseEnter={() => setHoveredNode(node.id)}
+            onMouseLeave={() => setHoveredNode(null)}
+          >
+            {/* Aura */}
+            <circle
+              cx={node.x}
+              cy={node.y}
+              r="38"
+              fill="url(#destAura)"
+              opacity={isHov ? 0.8 : 0.5}
+              style={{ transition: "opacity 0.3s" }}
+            />
+            {/* Pulse rings */}
+            {[12, 20, 28].map((r, ri) => (
+              <circle
+                key={ri}
+                cx={node.x}
+                cy={node.y}
+                r={r}
+                fill="none"
+                stroke="#d4a017"
+                strokeWidth={ri === 0 ? 1 : ri === 1 ? 0.7 : 0.4}
+                opacity={ri === 0 ? 0.6 : ri === 1 ? 0.35 : 0.18}
+                style={{
+                  animation: `pulseRingNode 2.8s ease-out ${
+                    i * 0.4 + ri * 0.55
+                  }s infinite`,
+                  transformOrigin: `${node.x}px ${node.y}px`,
+                }}
+              />
+            ))}
+            {/* Core */}
+            <circle
+              cx={node.x}
+              cy={node.y}
+              r={isHov ? 8 : 6.5}
+              fill="#d4a017"
+              filter="url(#glowGold)"
+              style={{
+                transition: "r 0.25s",
+                animation: `nodeGlowGold 2.5s ease-in-out ${i * 0.35}s infinite`,
+              }}
+            />
+            {/* Inner bright */}
+            <circle
+              cx={node.x}
+              cy={node.y}
+              r={isHov ? 4 : 3}
+              fill="#fef3c7"
+              style={{ transition: "r 0.25s" }}
+            />
+
+            {/* Label card */}
+            <DestLabel node={node} isHov={isHov} />
+          </g>
+        );
+      })}
+    </svg>
+  );
+}
+
+// ── Node Labels ─────────────────────────────────────────────
+
+function OriginLabel({ node, isHov }) {
+  const pad = 6;
+  const lw = node.label.length > 6 ? 70 : 62;
+  const lh = 30;
+  const lx = node.x - lw - 14;
+  const ly = node.y - lh / 2;
+
+  return (
+    <g style={{ animation: "floatLabel 5s ease-in-out infinite" }}>
+      {/* Connector line */}
+      <line
+        x1={node.x - 7}
+        y1={node.y}
+        x2={lx + lw}
+        y2={ly + lh / 2}
+        stroke="#22c55e"
+        strokeWidth="0.6"
+        opacity="0.4"
+      />
+      {/* Card */}
+      <rect
+        x={lx}
+        y={ly}
+        width={lw}
+        height={lh}
+        rx="3"
+        fill="#050d14"
+        stroke="#22c55e"
+        strokeWidth={isHov ? 1.2 : 0.7}
+        opacity="0.95"
+        style={{ transition: "stroke-width 0.3s" }}
+      />
+      {/* Top accent line */}
+      <rect x={lx} y={ly} width={lw} height="2" rx="1" fill="#22c55e" opacity="0.6" />
+      <text
+        x={lx + pad}
+        y={ly + 12}
+        fill="#22c55e"
+        fontSize="8.5"
+        fontFamily="'JetBrains Mono', monospace"
+        fontWeight="700"
+        letterSpacing="0.8"
+      >
+        {node.label}
+      </text>
+      <text
+        x={lx + pad}
+        y={ly + 23}
+        fill="#94a3b8"
+        fontSize="6.5"
+        fontFamily="'JetBrains Mono', monospace"
+      >
+        {node.sub}
+      </text>
+    </g>
+  );
+}
+
+function DestLabel({ node, isHov }) {
+  const pad = 6;
+  const lw = node.label.length > 6 ? 75 : 65;
+  const lh = 30;
+  const lx = node.x + 14;
+  const ly = node.y - lh / 2;
+
+  return (
+    <g style={{ animation: "floatLabel 5s ease-in-out infinite" }}>
+      {/* Connector line */}
+      <line
+        x1={node.x + 7}
+        y1={node.y}
+        x2={lx}
+        y2={ly + lh / 2}
+        stroke="#d4a017"
+        strokeWidth="0.6"
+        opacity="0.4"
+      />
+      {/* Card */}
+      <rect
+        x={lx}
+        y={ly}
+        width={lw}
+        height={lh}
+        rx="3"
+        fill="#050d14"
+        stroke="#d4a017"
+        strokeWidth={isHov ? 1.2 : 0.7}
+        opacity="0.95"
+        style={{ transition: "stroke-width 0.3s" }}
+      />
+      {/* Top accent */}
+      <rect x={lx} y={ly} width={lw} height="2" rx="1" fill="#d4a017" opacity="0.6" />
+      <text
+        x={lx + pad}
+        y={ly + 12}
+        fill="#d4a017"
+        fontSize="8.5"
+        fontFamily="'JetBrains Mono', monospace"
+        fontWeight="700"
+        letterSpacing="0.8"
+      >
+        {node.label}
+      </text>
+      <text
+        x={lx + pad}
+        y={ly + 23}
+        fill="#94a3b8"
+        fontSize="6.5"
+        fontFamily="'JetBrains Mono', monospace"
+      >
+        {node.sub}
+      </text>
+    </g>
+  );
+}
+
+// ── Plane on Path ───────────────────────────────────────────
+
+function PlaneOnPath({ pathId, delay, dur }) {
+  return (
+    <g filter="url(#glowGold)">
+      <animateMotion
+        dur={`${dur}s`}
+        begin={`${delay}s`}
+        repeatCount="indefinite"
+        rotate="auto"
+        calcMode="spline"
+        keySplines="0.4 0 0.6 1"
+      >
+        <mpath href={`#${pathId}`} />
+      </animateMotion>
+      {/* Plane body */}
+      <polygon points="-7,0 3,-2.5 3,2.5" fill="#ffd700" opacity="0.95" />
+      {/* Wings */}
+      <polygon points="-3,0 -7,-5 -5,0 -7,5" fill="#ffd700" opacity="0.5" />
+      {/* Tail */}
+      <polygon points="-7,0 -10,-3 -9,0 -10,3" fill="#ffd700" opacity="0.4" />
+    </g>
+  );
+}
+
+// ============================================================
+// MAIN COMPONENT
+// ============================================================
 
 export default function CorridorAtlas() {
+  const [hoveredNode, setHoveredNode] = useState(null);
+  const [mapSize, setMapSize] = useState({ width: 0, height: 0 });
+  const [counters, setCounters] = useState({
+    corridors: 0,
+    origins: 0,
+    destinations: 0,
+  });
+  const [mounted, setMounted] = useState(false);
+  const mapRef = useRef(null);
+
+  // Observe map container size
+  useEffect(() => {
+    const el = mapRef.current;
+    if (!el) return;
+    const obs = new ResizeObserver((entries) => {
+      const { width, height } = entries[0].contentRect;
+      setMapSize({ width, height });
+    });
+    obs.observe(el);
+    setMapSize({ width: el.offsetWidth, height: el.offsetHeight });
+    return () => obs.disconnect();
+  }, []);
+
+  // Mount animation trigger
+  useEffect(() => {
+    const t = setTimeout(() => setMounted(true), 100);
+    return () => clearTimeout(t);
+  }, []);
+
+  // Count-up animation
+  useEffect(() => {
+    if (!mounted) return;
+    const targets = { corridors: 3, origins: 3, destinations: 3 };
+    let frame = 0;
+    const total = 80;
+    const id = setInterval(() => {
+      frame++;
+      const ease = 1 - Math.pow(1 - frame / total, 3);
+      setCounters({
+        corridors: Math.round(targets.corridors * ease),
+        origins: Math.round(targets.origins * ease),
+        destinations: Math.round(targets.destinations * ease),
+      });
+      if (frame >= total) clearInterval(id);
+    }, 18);
+    return () => clearInterval(id);
+  }, [mounted]);
+
   return (
-    <section className="relative overflow-hidden bg-[#02060C] min-h-screen text-white border-y border-[#3A2E18]">
-      {/* Background Glow */}
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(198,169,107,0.08),transparent_60%)]" />
+    <div
+      className="min-h-screen bg-[#060a10] text-white overflow-hidden relative"
+      style={{ fontFamily: "'JetBrains Mono', 'Courier New', monospace" }}
+    >
+      {/* ── Global Styles ── */}
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Orbitron:wght@400;600;700;800;900&display=swap');
 
-      {/* Noise Overlay */}
-      <div className="absolute inset-0 opacity-[0.03] bg-[url('https://www.transparenttextures.com/patterns/noise.png')]" />
+        @keyframes pulseRing {
+          0%   { transform: scale(1); opacity: 0.7; }
+          100% { transform: scale(3); opacity: 0; }
+        }
+        @keyframes pulseRingNode {
+          0%   { transform: scale(1); opacity: 0.7; }
+          100% { transform: scale(2.8); opacity: 0; }
+        }
+        @keyframes blink {
+          0%, 100% { opacity: 1; }
+          50%       { opacity: 0.15; }
+        }
+        @keyframes nodeGlowGreen {
+          0%, 100% { filter: drop-shadow(0 0 5px #22c55e) drop-shadow(0 0 10px #22c55e); }
+          50%       { filter: drop-shadow(0 0 12px #4ade80) drop-shadow(0 0 24px #4ade80); }
+        }
+        @keyframes nodeGlowGold {
+          0%, 100% { filter: drop-shadow(0 0 5px #d4a017) drop-shadow(0 0 10px #d4a017); }
+          50%       { filter: drop-shadow(0 0 12px #ffd700) drop-shadow(0 0 24px #ffd700); }
+        }
+        @keyframes corridorPulse {
+          0%, 100% { opacity: 0.75; stroke-width: 1.6; }
+          50%       { opacity: 1;    stroke-width: 2.2; }
+        }
+        @keyframes dashFlow {
+          to { stroke-dashoffset: -36; }
+        }
+        @keyframes floatLabel {
+          0%, 100% { transform: translateY(0px); }
+          50%       { transform: translateY(-3px); }
+        }
+        @keyframes slideInLeft {
+          from { opacity: 0; transform: translateX(-24px); }
+          to   { opacity: 1; transform: translateX(0); }
+        }
+        @keyframes slideInUp {
+          from { opacity: 0; transform: translateY(18px); }
+          to   { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes fadeIn {
+          from { opacity: 0; }
+          to   { opacity: 1; }
+        }
+        @keyframes scanline {
+          0%   { transform: translateY(-100%); opacity: 0; }
+          10%  { opacity: 1; }
+          90%  { opacity: 1; }
+          100% { transform: translateY(110vh); opacity: 0; }
+        }
+        @keyframes telemetryBar {
+          0%, 100% { transform: scaleY(0.35); opacity: 0.6; }
+          50%       { transform: scaleY(1);    opacity: 1; }
+        }
+        @keyframes mapLoad {
+          from { opacity: 0; transform: scale(0.985); }
+          to   { opacity: 1; transform: scale(1); }
+        }
+        @keyframes statusPulse {
+          0%, 100% { box-shadow: 0 0 0 0 #d4a01766; }
+          50%       { box-shadow: 0 0 0 6px #d4a01700; }
+        }
+        @keyframes headerReveal {
+          from { opacity: 0; transform: translateY(-16px); }
+          to   { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes panelReveal {
+          from { opacity: 0; transform: translateX(-20px); }
+          to   { opacity: 1; transform: translateX(0); }
+        }
+        @keyframes footerReveal {
+          from { opacity: 0; transform: translateY(16px); }
+          to   { opacity: 1; transform: translateY(0); }
+        }
 
-      <div className="relative z-10 max-w-[1800px] mx-auto px-6 lg:px-12 py-20">
-        {/* Top Header */}
-        <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-8 mb-16">
-          <div>
-            <motion.p
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8 }}
-              className="uppercase tracking-[0.3em] text-[#C6A96B] text-xs mb-5"
-            >
-              SWAQAR LTD — Corridors of Trust
-            </motion.p>
+        .font-orbitron { font-family: 'Orbitron', monospace; }
 
-            <motion.h1
-              initial={{ opacity: 0, y: 40 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 1 }}
-              className="text-4xl md:text-6xl leading-tight font-light tracking-wide"
-              style={{ fontFamily: "Cinzel, serif" }}
-            >
-              Africa ↔ Middle East
-              <br />
+        .panel-glass {
+          background: linear-gradient(135deg, rgba(5,12,22,0.94) 0%, rgba(8,16,28,0.90) 100%);
+          border: 1px solid rgba(212,160,23,0.18);
+          backdrop-filter: blur(12px);
+          -webkit-backdrop-filter: blur(12px);
+        }
+        .panel-glass:hover {
+          border-color: rgba(212,160,23,0.32);
+        }
+
+        .grid-bg {
+          background-image:
+            radial-gradient(circle at 20% 80%, rgba(34,197,94,0.04) 0%, transparent 50%),
+            radial-gradient(circle at 80% 20%, rgba(212,160,23,0.05) 0%, transparent 50%),
+            linear-gradient(rgba(212,160,23,0.025) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(212,160,23,0.025) 1px, transparent 1px);
+          background-size: 100% 100%, 100% 100%, 36px 36px, 36px 36px;
+        }
+
+        .scanline-el {
+          position: fixed;
+          left: 0; right: 0;
+          height: 3px;
+          background: linear-gradient(90deg, transparent 0%, rgba(212,160,23,0.12) 30%, rgba(212,160,23,0.2) 50%, rgba(212,160,23,0.12) 70%, transparent 100%);
+          animation: scanline 8s linear infinite;
+          pointer-events: none;
+          z-index: 100;
+        }
+
+        .status-dot-live {
+          width: 8px; height: 8px;
+          border-radius: 50%;
+          background: #d4a017;
+          animation: blink 1.5s ease-in-out infinite, statusPulse 1.5s ease-in-out infinite;
+          box-shadow: 0 0 8px #d4a017;
+        }
+
+        .telemetry-bar {
+          display: inline-block;
+          width: 3px;
+          background: linear-gradient(to top, #d4a017, #ffd700);
+          border-radius: 1.5px;
+          transform-origin: bottom center;
+        }
+
+        .map-wrapper {
+          animation: mapLoad 1.4s cubic-bezier(0.16,1,0.3,1) 0.2s both;
+        }
+
+        .header-anim {
+          animation: headerReveal 0.8s cubic-bezier(0.16,1,0.3,1) 0.1s both;
+        }
+        .panel-anim {
+          animation: panelReveal 0.8s cubic-bezier(0.16,1,0.3,1) 0.25s both;
+        }
+        .footer-anim {
+          animation: footerReveal 0.8s cubic-bezier(0.16,1,0.3,1) 0.5s both;
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 3px; height: 3px; }
+        ::-webkit-scrollbar-track { background: #060a10; }
+        ::-webkit-scrollbar-thumb { background: #d4a01744; border-radius: 4px; }
+      `}</style>
+
+      {/* Scanline */}
+      <div className="scanline-el" />
+
+      {/* Background grid */}
+      <div className="absolute inset-0 grid-bg pointer-events-none" />
+
+      {/* Main layout */}
+      <div className="relative flex flex-col min-h-screen z-10">
+
+        {/* ══ HEADER ══════════════════════════════════════════════════════ */}
+        <header className="header-anim flex items-start justify-between px-4 sm:px-6 lg:px-8 pt-4 sm:pt-5 lg:pt-6 pb-2 flex-shrink-0">
+          <div className="flex flex-col">
+            {/* Eyebrow */}
+            <p className="text-[9px] sm:text-[10px] tracking-[0.28em] text-[#d4a017] mb-1.5 opacity-75 font-medium">
+              SWAQAR LTD — CORRIDORS OF TRUST
+            </p>
+            {/* Main title */}
+            <h1 className="font-orbitron text-xl sm:text-3xl lg:text-4xl xl:text-5xl font-black text-white leading-none flex items-center gap-2 sm:gap-3 flex-wrap">
+              <span>Africa</span>
               <span
-                className="italic text-[#C6A96B]"
-                style={{ fontFamily: "Cormorant Garamond, serif" }}
+                className="text-[#d4a017] inline-block"
+                style={{ animation: "nodeGlowGold 3s ease-in-out infinite" }}
               >
-                Corridor Atlas
+                ⇌
               </span>
-            </motion.h1>
-
-            <motion.p
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.5 }}
-              className="mt-6 max-w-2xl text-[#B5B5B5] text-lg leading-8"
-            >
-              Verified cross-border trade corridors connecting Africa
-              to institutional demand networks in the Middle East.
-            </motion.p>
+              <span>Middle East Corridors</span>
+            </h1>
+            {/* Tagline */}
+            <p className="text-[9px] sm:text-[10px] tracking-[0.22em] text-[#d4a017] mt-1.5 sm:mt-2 font-medium opacity-85">
+              TRUSTED CONNECTIONS. VERIFIED TRADE. SHARED PROSPERITY.
+            </p>
           </div>
 
-          {/* Status */}
-          <motion.div
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="border border-[#3A2E18] px-6 py-4 bg-[#050B12]/80 backdrop-blur-xl"
+          {/* Right meta */}
+          <div
+            className="flex flex-col items-end gap-1 sm:gap-1.5 text-right flex-shrink-0 ml-4"
+            style={{ animation: "fadeIn 1s ease-out 0.4s both" }}
           >
-            <div className="flex items-center gap-3">
-              <div className="relative">
-                <div className="w-3 h-3 rounded-full bg-[#C6A96B]" />
-                <div className="absolute inset-0 rounded-full bg-[#C6A96B] animate-ping" />
-              </div>
-
-              <div>
-                <p className="text-[10px] tracking-[0.3em] text-[#777] uppercase">
-                  System Status
-                </p>
-                <p className="text-[#C6A96B] tracking-[0.2em] uppercase text-sm">
-                  Live Corridor
-                </p>
-              </div>
+            <p className="text-[8px] sm:text-[9px] tracking-[0.22em] text-[#d4a017] opacity-65 font-medium">
+              FIG · 02 · CORRIDOR ATLAS
+            </p>
+            <div className="flex items-center gap-1.5 sm:gap-2">
+              <span className="text-[9px] sm:text-[10px] tracking-[0.16em] text-gray-300 font-medium">
+                STATUS
+              </span>
+              <span className="text-[9px] sm:text-[10px] text-gray-300">·</span>
+              <span className="text-[9px] sm:text-[10px] tracking-[0.16em] text-[#d4a017] font-bold">
+                LIVE
+              </span>
+              <div className="status-dot-live" />
             </div>
-          </motion.div>
-        </div>
+          </div>
+        </header>
 
-        {/* Main Grid */}
-        <div className="grid lg:grid-cols-[320px_1fr_320px] gap-8 items-start">
-          {/* LEFT PANEL */}
-          <motion.div
-            initial={{ opacity: 0, x: -40 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            transition={{ duration: 1 }}
-            className="space-y-8"
-          >
-            <div className="border border-[#3A2E18] bg-[#071018]/60 backdrop-blur-xl p-6">
-              <h3 className="text-[#C6A96B] uppercase tracking-[0.2em] text-xs mb-6">
-                Origin Nodes
-              </h3>
+        {/* ══ BODY ════════════════════════════════════════════════════════ */}
+        <div className="flex-1 flex flex-col lg:flex-row gap-2 lg:gap-3 px-2 sm:px-4 lg:px-6 py-2 min-h-0">
 
-              <div className="space-y-5">
-                {africanNodes.map((node, index) => (
-                  <motion.div
-                    key={node.name}
-                    initial={{ opacity: 0, x: -20 }}
-                    whileInView={{ opacity: 1, x: 0 }}
-                    transition={{ delay: index * 0.2 }}
-                    className="flex items-center gap-4"
-                  >
-                    <div className="relative">
-                      <div className="w-4 h-4 rounded-full bg-[#4ADE80]" />
-                      <div className="absolute inset-0 rounded-full bg-[#4ADE80] animate-ping opacity-40" />
-                    </div>
+          {/* ── LEFT SIDEBAR ──────────────────────────────────────────── */}
+          <aside className="panel-anim w-full lg:w-[205px] xl:w-[220px] flex-shrink-0 flex flex-row lg:flex-col gap-2 lg:gap-2.5 z-20 order-2 lg:order-1">
 
-                    <div>
-                      <p className="text-lg">{node.name}</p>
-                      <p className="text-sm text-[#888]">
-                        {node.country}
-                      </p>
-                    </div>
-                  </motion.div>
-                ))}
-              </div>
-            </div>
-
-            <div className="border border-[#3A2E18] bg-[#071018]/60 backdrop-blur-xl p-6">
-              <h3 className="text-[#C6A96B] uppercase tracking-[0.2em] text-xs mb-6">
-                Destination Nodes
-              </h3>
-
-              <div className="space-y-5">
-                {middleEastNodes.map((node, index) => (
-                  <motion.div
-                    key={node.name}
-                    initial={{ opacity: 0, x: -20 }}
-                    whileInView={{ opacity: 1, x: 0 }}
-                    transition={{ delay: index * 0.2 }}
-                    className="flex items-center gap-4"
-                  >
-                    <div className="relative">
-                      <div className="w-4 h-4 rounded-full bg-[#C6A96B]" />
-                      <div className="absolute inset-0 rounded-full bg-[#C6A96B] animate-ping opacity-40" />
-                    </div>
-
-                    <div>
-                      <p className="text-lg">{node.name}</p>
-                      <p className="text-sm text-[#888]">
-                        {node.country}
-                      </p>
-                    </div>
-                  </motion.div>
-                ))}
-              </div>
-            </div>
-          </motion.div>
-
-          {/* MAP */}
-          <motion.div
-            initial={{ opacity: 0, scale: 0.97 }}
-            whileInView={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 1.2 }}
-            className="relative border border-[#3A2E18] bg-[#071018]/50 backdrop-blur-xl overflow-hidden"
-          >
-            <div className="absolute top-4 left-4 z-20 text-[10px] tracking-[0.3em] uppercase text-[#777]">
-              FIG · 02 · Corridor Atlas
-            </div>
-
-            <ComposableMap
-              projection="geoMercator"
-              projectionConfig={{
-                scale: 180,
-                center: [25, 12],
-              }}
-              className="w-full h-full"
-              style={{
-                width: "100%",
-                height: "850px",
-              }}
-            >
-              <defs>
-                <linearGradient id="corridorGradient">
-                  <stop offset="0%" stopColor="#4ADE80" />
-                  <stop offset="100%" stopColor="#C6A96B" />
-                </linearGradient>
-
-                <filter id="glow">
-                  <feGaussianBlur stdDeviation="4" result="blur" />
-                  <feMerge>
-                    <feMergeNode in="blur" />
-                    <feMergeNode in="SourceGraphic" />
-                  </feMerge>
-                </filter>
-              </defs>
-
-              {/* Map */}
-              <Geographies geography={geoUrl}>
-                {({ geographies }) =>
-                  geographies.map((geo) => (
-                    <Geography
-                      key={geo.rsmKey}
-                      geography={geo}
-                      fill="#0A121B"
-                      stroke="#26313D"
-                      strokeWidth={0.5}
-                      style={{
-                        default: {
-                          outline: "none",
-                        },
-                        hover: {
-                          fill: "#111C28",
-                          outline: "none",
-                        },
-                        pressed: {
-                          outline: "none",
-                        },
-                      }}
-                    />
-                  ))
-                }
-              </Geographies>
-
-              {/* Connections */}
-              {connections.map((connection, index) => {
-                const from = getNode(connection[0]);
-                const to = getNode(connection[1]);
-
-                return (
-                  <g key={index}>
-                    {/* Glow */}
-                    <Line
-                      from={from.coordinates}
-                      to={to.coordinates}
-                      stroke="rgba(198,169,107,0.15)"
-                      strokeWidth={8}
-                      strokeLinecap="round"
-                      filter="url(#glow)"
-                    />
-
-                    {/* Main Line */}
-                    <Line
-                      from={from.coordinates}
-                      to={to.coordinates}
-                      stroke="url(#corridorGradient)"
-                      strokeWidth={2}
-                      strokeLinecap="round"
-                      strokeDasharray="8 10"
-                      style={{
-                        animation:
-                          "dashFlow 8s linear infinite",
-                      }}
-                    />
-                  </g>
-                );
-              })}
-
-              {/* African Nodes */}
-              {africanNodes.map((node, index) => (
-                <Marker
-                  key={index}
-                  coordinates={node.coordinates}
-                >
-                  <g>
-                    <circle
-                      r={18}
-                      fill="rgba(74,222,128,0.15)"
-                    >
-                      <animate
-                        attributeName="r"
-                        values="14;20;14"
-                        dur="3s"
-                        repeatCount="indefinite"
-                      />
-                    </circle>
-
-                    <circle
-                      r={6}
-                      fill="#4ADE80"
-                    />
-
-                    <text
-                      textAnchor="middle"
-                      y={-24}
-                      style={{
-                        fill: "#fff",
-                        fontSize: "13px",
-                        fontFamily: "Inter",
-                      }}
-                    >
-                      {node.name}
-                    </text>
-                  </g>
-                </Marker>
-              ))}
-
-              {/* Middle East Nodes */}
-              {middleEastNodes.map((node, index) => (
-                <Marker
-                  key={index}
-                  coordinates={node.coordinates}
-                >
-                  <g>
-                    <circle
-                      r={20}
-                      fill="rgba(198,169,107,0.15)"
-                    >
-                      <animate
-                        attributeName="r"
-                        values="16;24;16"
-                        dur="3s"
-                        repeatCount="indefinite"
-                      />
-                    </circle>
-
-                    <circle
-                      r={7}
-                      fill="#C6A96B"
-                    />
-
-                    <text
-                      textAnchor="middle"
-                      y={-26}
-                      style={{
-                        fill: "#fff",
-                        fontSize: "13px",
-                        fontFamily: "Inter",
-                      }}
-                    >
-                      {node.name}
-                    </text>
-                  </g>
-                </Marker>
-              ))}
-            </ComposableMap>
-
-            {/* Overlay Glow */}
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(198,169,107,0.08),transparent_70%)] pointer-events-none" />
-          </motion.div>
-
-          {/* RIGHT PANEL */}
-          <motion.div
-            initial={{ opacity: 0, x: 40 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            transition={{ duration: 1 }}
-            className="space-y-8"
-          >
-            <div className="border border-[#3A2E18] bg-[#071018]/60 backdrop-blur-xl p-6">
-              <h3 className="text-[#C6A96B] uppercase tracking-[0.2em] text-xs mb-6">
-                Corridor Metrics
-              </h3>
-
-              <div className="space-y-5">
-                {[
-                  ["Active Corridors", "6"],
-                  ["Origin Nodes", "3"],
-                  ["Destination Nodes", "3"],
-                  ["Validation", "Live"],
-                ].map((item, index) => (
-                  <div
-                    key={index}
-                    className="flex justify-between border-b border-[#1B2631] pb-4"
-                  >
-                    <p className="text-[#9CA3AF]">
-                      {item[0]}
-                    </p>
-
-                    <p className="text-[#C6A96B] uppercase tracking-[0.15em]">
-                      {item[1]}
-                    </p>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div className="border border-[#3A2E18] bg-[#071018]/60 backdrop-blur-xl p-6">
-              <h3 className="text-[#C6A96B] uppercase tracking-[0.2em] text-xs mb-6">
-                Infrastructure Rules
-              </h3>
-
-              <div className="space-y-4">
-                {[
-                  "Verified counterparties only",
-                  "No compliance, no execution",
-                  "Structured settlement enforced",
-                  "Non-custodial infrastructure",
-                ].map((item, index) => (
-                  <motion.div
-                    key={index}
-                    whileHover={{ x: 5 }}
-                    className="flex gap-3 items-start"
-                  >
-                    <div className="w-2 h-2 rounded-full bg-[#C6A96B] mt-2" />
-
-                    <p className="text-[#CFCFCF] leading-7">
-                      {item}
-                    </p>
-                  </motion.div>
-                ))}
-              </div>
-            </div>
-          </motion.div>
-        </div>
-
-        {/* Bottom Strip */}
-        <motion.div
-          initial={{ opacity: 0, y: 40 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 1 }}
-          className="grid md:grid-cols-4 gap-6 mt-16"
-        >
-          {[
-            ["Verified", "Multi-layer validation"],
-            ["Coordinated", "Structured execution"],
-            ["Governed", "Rules & compliance"],
-            ["Non-Custodial", "No goods or funds held"],
-          ].map((item, index) => (
-            <div
-              key={index}
-              className="border border-[#3A2E18] bg-[#071018]/60 backdrop-blur-xl p-6"
-            >
-              <h4
-                className="text-[#C6A96B] text-xl mb-3"
-                style={{ fontFamily: "Cinzel, serif" }}
-              >
-                {item[0]}
-              </h4>
-
-              <p className="text-[#9CA3AF]">
-                {item[1]}
+            {/* Origin Nodes Card */}
+            <div className="panel-glass rounded-lg p-3 flex-1 lg:flex-none transition-all duration-300">
+              <p className="text-[8px] sm:text-[9px] tracking-[0.22em] text-[#d4a017] font-bold mb-3 uppercase">
+                Origin Nodes (Africa)
               </p>
+              {ORIGIN_NODES.map((node, i) => (
+                <NodeListItem
+                  key={node.id}
+                  node={node}
+                  color="green"
+                  isActive={hoveredNode === node.id}
+                  delay={0.3 + i * 0.1}
+                  onHover={setHoveredNode}
+                  onLeave={() => setHoveredNode(null)}
+                />
+              ))}
             </div>
-          ))}
-        </motion.div>
-      </div>
 
-      {/* Global Styles */}
-      <style jsx>{`
-        @keyframes dashFlow {
-          to {
-            stroke-dashoffset: -200;
-          }
-        }
-      `}</style>
-    </section>
+            {/* Destination Nodes Card */}
+            <div className="panel-glass rounded-lg p-3 flex-1 lg:flex-none transition-all duration-300">
+              <p className="text-[8px] sm:text-[9px] tracking-[0.22em] text-[#d4a017] font-bold mb-3 uppercase leading-tight">
+                Destination Nodes
+                <br className="hidden lg:block" />
+                <span className="lg:block">(Middle East)</span>
+              </p>
+              {DEST_NODES.map((node, i) => (
+                <NodeListItem
+                  key={node.id}
+                  node={node}
+                  color="gold"
+                  isActive={hoveredNode === node.id}
+                  delay={0.45 + i * 0.1}
+                  onHover={setHoveredNode}
+                  onLeave={() => setHoveredNode(null)}
+                />
+              ))}
+            </div>
+
+            {/* Metrics Card */}
+            <div className="panel-glass rounded-lg p-3 flex-1 lg:flex-none transition-all duration-300">
+              <div
+                className="flex items-center gap-2 mb-3"
+                style={{ animation: "fadeIn 0.5s ease-out 0.6s both" }}
+              >
+                <div
+                  style={{ animation: "nodeGlowGold 3s ease-in-out infinite" }}
+                >
+                  <IconGlobe />
+                </div>
+                <p className="text-[8px] sm:text-[9px] tracking-[0.14em] text-white font-bold uppercase">
+                  Corridor Metrics
+                </p>
+              </div>
+              <MetricRow
+                label="Active Corridors"
+                value={counters.corridors}
+                delay={0.65}
+              />
+              <MetricRow
+                label="Origin Nodes"
+                value={counters.origins}
+                delay={0.72}
+              />
+              <MetricRow
+                label="Destination Nodes"
+                value={counters.destinations}
+                delay={0.79}
+              />
+              <MetricRow
+                label="System Status"
+                isLive
+                delay={0.86}
+              />
+              <div
+                className="flex justify-between items-center pt-1.5"
+                style={{ animation: "fadeIn 0.5s ease-out 0.93s both" }}
+              >
+                <span className="text-[8px] tracking-wider text-gray-400 uppercase">
+                  Validated Transactions Only
+                </span>
+                <span
+                  className="text-green-400 text-[11px] font-bold"
+                  style={{ animation: "nodeGlowGreen 2.5s ease-in-out infinite" }}
+                >
+                  ✓
+                </span>
+              </div>
+            </div>
+          </aside>
+
+          {/* ── MAP ───────────────────────────────────────────────────── */}
+          <main className="flex-1 relative min-h-[300px] sm:min-h-[420px] lg:min-h-0 order-1 lg:order-2 rounded-lg overflow-hidden">
+            <div
+              ref={mapRef}
+              className="map-wrapper absolute inset-0 rounded-lg overflow-hidden border border-[#d4a017]/10"
+            >
+              {/* Map image */}
+              <img
+                src={MAP_IMAGE}
+                alt="Africa Middle East Map"
+                className="w-full h-full object-cover"
+                style={{ opacity: 0.92 }}
+                onError={(e) => {
+                  // Fallback dark background if image not found
+                  e.target.style.display = "none";
+                }}
+              />
+
+              {/* Dark vignette overlay */}
+              <div
+                className="absolute inset-0 pointer-events-none"
+                style={{
+                  background:
+                    "radial-gradient(ellipse at center, transparent 40%, rgba(4,8,14,0.6) 100%)",
+                }}
+              />
+
+              {/* Edge fade */}
+              <div
+                className="absolute inset-0 pointer-events-none"
+                style={{
+                  background:
+                    "linear-gradient(to right, rgba(6,10,16,0.55) 0%, transparent 12%, transparent 88%, rgba(6,10,16,0.55) 100%)",
+                }}
+              />
+              <div
+                className="absolute inset-0 pointer-events-none"
+                style={{
+                  background:
+                    "linear-gradient(to bottom, rgba(6,10,16,0.4) 0%, transparent 8%, transparent 85%, rgba(6,10,16,0.7) 100%)",
+                }}
+              />
+
+              {/* SVG overlay for corridors and nodes */}
+              {mapSize.width > 0 && (
+                <MapOverlay
+                  hoveredNode={hoveredNode}
+                  setHoveredNode={setHoveredNode}
+                  mapSize={mapSize}
+                />
+              )}
+            </div>
+
+            {/* ── Legend (bottom-right) ── */}
+            <div
+              className="absolute bottom-2 right-2 sm:bottom-3 sm:right-3 panel-glass rounded-lg p-2.5 sm:p-3 z-30"
+              style={{ animation: "fadeIn 1.2s ease-out 1s both" }}
+            >
+              <LegendItem type="solid" label="Active Corridor" />
+              <LegendItem type="dashed" label="Potential Corridor" />
+              <div className="flex items-center gap-2 mt-2 pt-2 border-t border-white/5">
+                <span className="text-[7px] sm:text-[8px] tracking-[0.1em] text-gray-400 uppercase">
+                  Data Telemetry
+                </span>
+                <TelemetryBars />
+              </div>
+            </div>
+          </main>
+        </div>
+
+        {/* ══ FOOTER ══════════════════════════════════════════════════════ */}
+        <footer className="footer-anim flex-shrink-0 border-t border-[#d4a017]/15 px-4 sm:px-6 lg:px-8 py-3 sm:py-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 md:gap-6">
+            {FOOTER_ITEMS.map((item, i) => (
+              <FooterPillar
+                key={item.title}
+                item={item}
+                delay={0.7 + i * 0.08}
+              />
+            ))}
+          </div>
+        </footer>
+      </div>
+    </div>
   );
 }

@@ -7,6 +7,7 @@ import WhatIsSwaqar from './components/sections/WhatIsSwaqar'
 import CorridorAtlas from './components/sections/CorridorAtlas'
 import ControlPipeline from './components/sections/ControlPipeline'
 import ControlGate from './components/sections/ControlGate'
+import Participants from './components/sections/Participants'
 
 const App = () => {
   return (
@@ -18,6 +19,7 @@ const App = () => {
         <WhatIsSwaqar />
         <ControlPipeline />
         <ControlGate />
+        <Participants />
         <CorridorAtlas />
       </main>
       <Footer />
