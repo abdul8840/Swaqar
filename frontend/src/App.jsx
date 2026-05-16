@@ -8,6 +8,12 @@ import CorridorAtlas from './components/sections/CorridorAtlas'
 import ControlPipeline from './components/sections/ControlPipeline'
 import ControlGate from './components/sections/ControlGate'
 import Participants from './components/sections/Participants'
+import TransactionLifecycle from './components/sections/TransactionLifecycle'
+import Governance from './components/sections/Governance'
+import GeographyCorridor from './components/sections/GeographyCorridor'
+import ComparisonTable from './components/sections/ComparisonTable'
+import DoesDoesNot from './components/sections/DoesDoesNot'
+import IntakeForm from './components/sections/IntakeForm'
 
 const App = () => {
   return (
@@ -21,6 +27,13 @@ const App = () => {
         <ControlGate />
         <Participants />
         <CorridorAtlas />
+        <TransactionLifecycle />
+        <Governance />
+        <GeographyCorridor />
+        <ComparisonTable />
+        <DoesDoesNot />
+        <IntakeForm />
+
       </main>
       <Footer />
     </div>
