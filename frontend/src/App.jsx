@@ -14,6 +14,10 @@ import GeographyCorridor from './components/sections/GeographyCorridor'
 import ComparisonTable from './components/sections/ComparisonTable'
 import DoesDoesNot from './components/sections/DoesDoesNot'
 import IntakeForm from './components/sections/IntakeForm'
+import SwaqarGroup from './components/sections/SwaqarGroup'
+import SwaqarGate from './components/sections/SwaqarGate'
+import SwaqarCorridorsOfTrust from './components/sections/SwaqarCorridorsOfTrust'
+import SwaqarPartner from './components/sections/SwaqarPartner'
 
 const App = () => {
   return (
@@ -23,6 +27,10 @@ const App = () => {
         <Hero />
         <CredentialsStrip />
         <CorridorAtlas />
+        {/* <SwaqarGroup /> */}
+        <SwaqarCorridorsOfTrust />
+        <SwaqarGate />
+        <SwaqarPartner />
         <WhatIsSwaqar />
         <ControlPipeline />
         <ControlGate />
