@@ -427,7 +427,7 @@ export default function Hero() {
             <img
               src={WorldMapImg}
               alt="Africa Middle East Map"
-              className="w-full h-full object-cover object-center"
+              className="w-full h-full object-contain object-center"
               style={{ opacity: 0.88 }}
               loading="eager"
             />

@@ -252,72 +252,6 @@ function TelemetryBars() {
   );
 }
 
-// ── Node List Item ──────────────────────────────────────────
-
-function NodeListItem({ node, color, isActive, delay, onHover, onLeave }) {
-  const isGreen = color === "green";
-  return (
-    <div
-      className="flex items-center gap-2.5 mb-3 cursor-pointer group"
-      style={{ animation: `slideInLeft 0.5s ease-out ${delay}s both` }}
-      onMouseEnter={() => onHover(node.id)}
-      onMouseLeave={onLeave}
-    >
-      {/* Ring indicator */}
-      <div className="relative flex-shrink-0 w-5 h-5 flex items-center justify-center">
-        <div
-          className={`absolute rounded-full border ${
-            isGreen ? "border-green-400" : "border-yellow-400"
-          }`}
-          style={{
-            width: 18,
-            height: 18,
-            animation: `pulseRing 2.5s ease-out ${delay}s infinite`,
-            opacity: 0.4,
-          }}
-        />
-        <div
-          className={`absolute rounded-full border ${
-            isGreen ? "border-green-400" : "border-yellow-400"
-          }`}
-          style={{
-            width: 26,
-            height: 26,
-            animation: `pulseRing 2.5s ease-out ${delay + 0.4}s infinite`,
-            opacity: 0.2,
-          }}
-        />
-        <div
-          className={`w-3 h-3 rounded-full border-2 relative z-10 transition-transform duration-300 group-hover:scale-125 ${
-            isGreen
-              ? "bg-green-500 border-green-300"
-              : "bg-yellow-500 border-yellow-300"
-          }`}
-          style={{
-            boxShadow: isGreen
-              ? "0 0 8px #22c55e, 0 0 16px #22c55e66"
-              : "0 0 8px #d4a017, 0 0 16px #d4a01766",
-          }}
-        />
-      </div>
-      <div>
-        <p
-          className={`text-[10px] font-bold tracking-wider transition-colors duration-200 ${
-            isActive
-              ? isGreen
-                ? "text-green-400"
-                : "text-yellow-400"
-              : "text-white"
-          }`}
-        >
-          {node.label}
-        </p>
-        <p className="text-[9px] text-gray-500">{node.sub}</p>
-      </div>
-    </div>
-  );
-}
-
 // ── Metric Row ──────────────────────────────────────────────
 
 function MetricRow({ label, value, isLive, delay }) {
@@ -818,7 +752,6 @@ function OriginLabel({ node, isHov }) {
         y={ly + 12}
         fill="#22c55e"
         fontSize="8.5"
-        fontFamily="'JetBrains Mono', monospace"
         fontWeight="700"
         letterSpacing="0.8"
       >
@@ -829,7 +762,6 @@ function OriginLabel({ node, isHov }) {
         y={ly + 23}
         fill="#94a3b8"
         fontSize="6.5"
-        fontFamily="'JetBrains Mono', monospace"
       >
         {node.sub}
       </text>
@@ -876,7 +808,6 @@ function DestLabel({ node, isHov }) {
         y={ly + 12}
         fill="#d4a017"
         fontSize="8.5"
-        fontFamily="'JetBrains Mono', monospace"
         fontWeight="700"
         letterSpacing="0.8"
       >
@@ -887,7 +818,6 @@ function DestLabel({ node, isHov }) {
         y={ly + 23}
         fill="#94a3b8"
         fontSize="6.5"
-        fontFamily="'JetBrains Mono', monospace"
       >
         {node.sub}
       </text>
@@ -976,12 +906,9 @@ export default function CorridorAtlas() {
   return (
     <div
       className="min-h-screen bg-[#060a10] text-white overflow-hidden relative"
-      style={{ fontFamily: "'JetBrains Mono', 'Courier New', monospace" }}
     >
       {/* ── Global Styles ── */}
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Orbitron:wght@400;600;700;800;900&display=swap');
-
         @keyframes pulseRing {
           0%   { transform: scale(1); opacity: 0.7; }
           100% { transform: scale(3); opacity: 0; }
@@ -1055,8 +982,6 @@ export default function CorridorAtlas() {
           from { opacity: 0; transform: translateY(16px); }
           to   { opacity: 1; transform: translateY(0); }
         }
-
-        .font-orbitron { font-family: 'Orbitron', monospace; }
 
         .panel-glass {
           background: linear-gradient(135deg, rgba(5,12,22,0.94) 0%, rgba(8,16,28,0.90) 100%);
@@ -1133,14 +1058,14 @@ export default function CorridorAtlas() {
       <div className="relative flex flex-col min-h-screen z-10">
 
         {/* ══ HEADER ══════════════════════════════════════════════════════ */}
-        <header className="header-anim flex items-start justify-between px-4 sm:px-6 lg:px-8 pt-4 sm:pt-5 lg:pt-6 pb-2 flex-shrink-0">
-          <div className="flex flex-col">
+        <header className="header-anim flex flex-col items-center justify-center text-center px-4 sm:px-6 lg:px-8 pt-6 sm:pt-8 pb-4 flex-shrink-0">
+          <div className="max-w-4xl">
             {/* Eyebrow */}
-            <p className="text-[9px] sm:text-[10px] tracking-[0.28em] text-[#d4a017] mb-1.5 opacity-75 font-medium">
+            <p className="text-[9px] sm:text-[10px] tracking-[0.28em] text-[#d4a017] mb-2 opacity-75 font-medium">
               SWAQAR LTD — CORRIDORS OF TRUST
             </p>
             {/* Main title */}
-            <h1 className="font-orbitron text-xl sm:text-3xl lg:text-4xl xl:text-5xl font-black text-white leading-none flex items-center gap-2 sm:gap-3 flex-wrap">
+            <h1 className="text-2xl sm:text-4xl md:text-5xl lg:text-6xl font-black text-white leading-tight flex items-center justify-center gap-2 sm:gap-4 flex-wrap">
               <span>Africa</span>
               <span
                 className="text-[#d4a017] inline-block"
@@ -1151,20 +1076,12 @@ export default function CorridorAtlas() {
               <span>Middle East Corridors</span>
             </h1>
             {/* Tagline */}
-            <p className="text-[9px] sm:text-[10px] tracking-[0.22em] text-[#d4a017] mt-1.5 sm:mt-2 font-medium opacity-85">
+            <p className="text-[9px] sm:text-[11px] tracking-[0.22em] text-[#d4a017] mt-2 sm:mt-3 font-medium opacity-85">
               TRUSTED CONNECTIONS. VERIFIED TRADE. SHARED PROSPERITY.
             </p>
-          </div>
-
-          {/* Right meta */}
-          <div
-            className="flex flex-col items-end gap-1 sm:gap-1.5 text-right flex-shrink-0 ml-4"
-            style={{ animation: "fadeIn 1s ease-out 0.4s both" }}
-          >
-            <p className="text-[8px] sm:text-[9px] tracking-[0.22em] text-[#d4a017] opacity-65 font-medium">
-              FIG · 02 · CORRIDOR ATLAS
-            </p>
-            <div className="flex items-center gap-1.5 sm:gap-2">
+            
+            {/* Status indicator - moved below tagline for centered layout */}
+            <div className="flex items-center justify-center gap-2 mt-4 sm:mt-5">
               <span className="text-[9px] sm:text-[10px] tracking-[0.16em] text-gray-300 font-medium">
                 STATUS
               </span>
@@ -1178,181 +1095,92 @@ export default function CorridorAtlas() {
         </header>
 
         {/* ══ BODY ════════════════════════════════════════════════════════ */}
-        <div className="flex-1 flex flex-col lg:flex-row gap-2 lg:gap-3 px-2 sm:px-4 lg:px-6 py-2 min-h-0">
-
-          {/* ── LEFT SIDEBAR ──────────────────────────────────────────── */}
-          <aside className="panel-anim w-full lg:w-[205px] xl:w-[220px] flex-shrink-0 flex flex-row lg:flex-col gap-2 lg:gap-2.5 z-20 order-2 lg:order-1">
-
-            {/* Origin Nodes Card */}
-            <div className="panel-glass rounded-lg p-3 flex-1 lg:flex-none transition-all duration-300">
-              <p className="text-[8px] sm:text-[9px] tracking-[0.22em] text-[#d4a017] font-bold mb-3 uppercase">
-                Origin Nodes (Africa)
-              </p>
-              {ORIGIN_NODES.map((node, i) => (
-                <NodeListItem
-                  key={node.id}
-                  node={node}
-                  color="green"
-                  isActive={hoveredNode === node.id}
-                  delay={0.3 + i * 0.1}
-                  onHover={setHoveredNode}
-                  onLeave={() => setHoveredNode(null)}
-                />
-              ))}
-            </div>
-
-            {/* Destination Nodes Card */}
-            <div className="panel-glass rounded-lg p-3 flex-1 lg:flex-none transition-all duration-300">
-              <p className="text-[8px] sm:text-[9px] tracking-[0.22em] text-[#d4a017] font-bold mb-3 uppercase leading-tight">
-                Destination Nodes
-                <br className="hidden lg:block" />
-                <span className="lg:block">(Middle East)</span>
-              </p>
-              {DEST_NODES.map((node, i) => (
-                <NodeListItem
-                  key={node.id}
-                  node={node}
-                  color="gold"
-                  isActive={hoveredNode === node.id}
-                  delay={0.45 + i * 0.1}
-                  onHover={setHoveredNode}
-                  onLeave={() => setHoveredNode(null)}
-                />
-              ))}
-            </div>
-
-            {/* Metrics Card */}
-            <div className="panel-glass rounded-lg p-3 flex-1 lg:flex-none transition-all duration-300">
+        <div className="flex-1 flex flex-col items-center px-4 sm:px-6 py-4 min-h-0">
+          
+          {/* Map container with consistent dimensions */}
+          <div className="w-full max-w-6xl mx-auto">
+            <main className="relative w-full rounded-lg overflow-hidden shadow-2xl h-[280px] sm:h-[480px] md:h-[520px] lg:h-[600px]">
               <div
-                className="flex items-center gap-2 mb-3"
-                style={{ animation: "fadeIn 0.5s ease-out 0.6s both" }}
+                ref={mapRef}
+                className="map-wrapper absolute inset-0 rounded-lg overflow-hidden border border-[#d4a017]/20"
               >
+                {/* Map image */}
+                <img
+                  src={MAP_IMAGE}
+                  alt="Africa Middle East Map"
+                  className="w-full h-full object-cover"
+                  style={{ opacity: 0.92 }}
+                  onError={(e) => {
+                    // Fallback dark background if image not found
+                    e.target.style.display = "none";
+                  }}
+                />
+
+                {/* Dark vignette overlay */}
                 <div
-                  style={{ animation: "nodeGlowGold 3s ease-in-out infinite" }}
-                >
-                  <IconGlobe />
-                </div>
-                <p className="text-[8px] sm:text-[9px] tracking-[0.14em] text-white font-bold uppercase">
-                  Corridor Metrics
-                </p>
-              </div>
-              <MetricRow
-                label="Active Corridors"
-                value={counters.corridors}
-                delay={0.65}
-              />
-              <MetricRow
-                label="Origin Nodes"
-                value={counters.origins}
-                delay={0.72}
-              />
-              <MetricRow
-                label="Destination Nodes"
-                value={counters.destinations}
-                delay={0.79}
-              />
-              <MetricRow
-                label="System Status"
-                isLive
-                delay={0.86}
-              />
-              <div
-                className="flex justify-between items-center pt-1.5"
-                style={{ animation: "fadeIn 0.5s ease-out 0.93s both" }}
-              >
-                <span className="text-[8px] tracking-wider text-gray-400 uppercase">
-                  Validated Transactions Only
-                </span>
-                <span
-                  className="text-green-400 text-[11px] font-bold"
-                  style={{ animation: "nodeGlowGreen 2.5s ease-in-out infinite" }}
-                >
-                  ✓
-                </span>
-              </div>
-            </div>
-          </aside>
-
-          {/* ── MAP ───────────────────────────────────────────────────── */}
-          <main className="flex-1 relative min-h-[300px] sm:min-h-[420px] lg:min-h-0 order-1 lg:order-2 rounded-lg overflow-hidden">
-            <div
-              ref={mapRef}
-              className="map-wrapper absolute inset-0 rounded-lg overflow-hidden border border-[#d4a017]/10"
-            >
-              {/* Map image */}
-              <img
-                src={MAP_IMAGE}
-                alt="Africa Middle East Map"
-                className="w-full h-full object-cover"
-                style={{ opacity: 0.92 }}
-                onError={(e) => {
-                  // Fallback dark background if image not found
-                  e.target.style.display = "none";
-                }}
-              />
-
-              {/* Dark vignette overlay */}
-              <div
-                className="absolute inset-0 pointer-events-none"
-                style={{
-                  background:
-                    "radial-gradient(ellipse at center, transparent 40%, rgba(4,8,14,0.6) 100%)",
-                }}
-              />
-
-              {/* Edge fade */}
-              <div
-                className="absolute inset-0 pointer-events-none"
-                style={{
-                  background:
-                    "linear-gradient(to right, rgba(6,10,16,0.55) 0%, transparent 12%, transparent 88%, rgba(6,10,16,0.55) 100%)",
-                }}
-              />
-              <div
-                className="absolute inset-0 pointer-events-none"
-                style={{
-                  background:
-                    "linear-gradient(to bottom, rgba(6,10,16,0.4) 0%, transparent 8%, transparent 85%, rgba(6,10,16,0.7) 100%)",
-                }}
-              />
-
-              {/* SVG overlay for corridors and nodes */}
-              {mapSize.width > 0 && (
-                <MapOverlay
-                  hoveredNode={hoveredNode}
-                  setHoveredNode={setHoveredNode}
-                  mapSize={mapSize}
+                  className="absolute inset-0 pointer-events-none"
+                  style={{
+                    background:
+                      "radial-gradient(ellipse at center, transparent 40%, rgba(4,8,14,0.6) 100%)",
+                  }}
                 />
-              )}
-            </div>
 
-            {/* ── Legend (bottom-right) ── */}
-            <div
-              className="absolute bottom-2 right-2 sm:bottom-3 sm:right-3 panel-glass rounded-lg p-2.5 sm:p-3 z-30"
-              style={{ animation: "fadeIn 1.2s ease-out 1s both" }}
-            >
-              <LegendItem type="solid" label="Active Corridor" />
-              <LegendItem type="dashed" label="Potential Corridor" />
-              <div className="flex items-center gap-2 mt-2 pt-2 border-t border-white/5">
-                <span className="text-[7px] sm:text-[8px] tracking-[0.1em] text-gray-400 uppercase">
-                  Data Telemetry
-                </span>
-                <TelemetryBars />
+                {/* Edge fade */}
+                <div
+                  className="absolute inset-0 pointer-events-none"
+                  style={{
+                    background:
+                      "linear-gradient(to right, rgba(6,10,16,0.55) 0%, transparent 12%, transparent 88%, rgba(6,10,16,0.55) 100%)",
+                  }}
+                />
+                <div
+                  className="absolute inset-0 pointer-events-none"
+                  style={{
+                    background:
+                      "linear-gradient(to bottom, rgba(6,10,16,0.4) 0%, transparent 8%, transparent 85%, rgba(6,10,16,0.7) 100%)",
+                  }}
+                />
+
+                {/* SVG overlay for corridors and nodes */}
+                {mapSize.width > 0 && (
+                  <MapOverlay
+                    hoveredNode={hoveredNode}
+                    setHoveredNode={setHoveredNode}
+                    mapSize={mapSize}
+                  />
+                )}
               </div>
-            </div>
-          </main>
+
+              {/* ── Legend (bottom-right) ── */}
+              <div
+                className="absolute bottom-3 right-3 panel-glass rounded-lg p-2.5 sm:p-3 z-30"
+                style={{ animation: "fadeIn 1.2s ease-out 1s both" }}
+              >
+                <LegendItem type="solid" label="Active Corridor" />
+                <LegendItem type="dashed" label="Potential Corridor" />
+                <div className="flex items-center gap-2 mt-2 pt-2 border-t border-white/5">
+                  <span className="text-[7px] sm:text-[8px] tracking-[0.1em] text-gray-400 uppercase">
+                    Data Telemetry
+                  </span>
+                  <TelemetryBars />
+                </div>
+              </div>
+            </main>
+          </div>
         </div>
 
         {/* ══ FOOTER ══════════════════════════════════════════════════════ */}
-        <footer className="footer-anim flex-shrink-0 border-t border-[#d4a017]/15 px-4 sm:px-6 lg:px-8 py-3 sm:py-4">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 md:gap-6">
-            {FOOTER_ITEMS.map((item, i) => (
-              <FooterPillar
-                key={item.title}
-                item={item}
-                delay={0.7 + i * 0.08}
-              />
-            ))}
+        <footer className="footer-anim flex-shrink-0 border-t border-[#d4a017]/15 px-4 sm:px-6 lg:px-8 py-4 sm:py-5 mt-auto">
+          <div className="max-w-6xl mx-auto">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6">
+              {FOOTER_ITEMS.map((item, i) => (
+                <FooterPillar
+                  key={item.title}
+                  item={item}
+                  delay={0.7 + i * 0.08}
+                />
+              ))}
+            </div>
           </div>
         </footer>
       </div>

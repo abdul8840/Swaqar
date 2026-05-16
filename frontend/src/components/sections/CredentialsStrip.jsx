@@ -1,69 +1,162 @@
-import React from 'react'
-import { motion } from 'framer-motion'
-import AnimatedCounter from '../ui/AnimatedCounter'
+// InfrastructureStats.jsx
 
-const METRICS = [
+import { motion } from "framer-motion";
+import {
+  FiGlobe,
+  FiUsers,
+  FiShield,
+  FiLock,
+} from "react-icons/fi";
+
+const stats = [
   {
-    value: 6,
-    suffix: '',
-    label: 'Active Trade Corridors',
-    sub: 'Africa ↔ Middle East',
+    id: 1,
+    icon: <FiGlobe />,
+    number: "2",
+    title: "ACTIVE CORRIDORS",
+    subtitle: "Africa ↔ Middle East",
   },
   {
-    value: 12,
-    suffix: '',
-    label: 'Institutional Participant Categories',
-    sub: 'Verified & Credentialed',
+    id: 2,
+    icon: <FiUsers />,
+    number: "4",
+    title: "PARTICIPANT",
+    subtitle: "CATEGORIES",
   },
   {
-    value: 12,
-    suffix: '',
-    label: 'Sequential Validation Gates',
-    sub: 'Per Transaction Cycle',
+    id: 3,
+    icon: <FiShield />,
+    number: "5",
+    title: "VALIDATION GATES",
+    subtitle: "PER TRANSACTION",
   },
   {
-    value: 100,
-    suffix: '%',
-    label: 'Non-Custodial Infrastructure',
-    sub: 'Zero Fund Custody Model',
+    id: 4,
+    icon: <FiLock />,
+    number: "100%",
+    title: "NON-CUSTODIAL",
+    subtitle: "INFRASTRUCTURE",
   },
-]
+];
 
 export default function CredentialsStrip() {
   return (
-    <section className="relative bg-[#0E0E0F] border-y border-[#C9A84C11]">
-      <div className="max-w-[1400px] mx-auto px-6 lg:px-12">
-        <div className="grid grid-cols-2 lg:grid-cols-4">
-          {METRICS.map((metric, i) => (
+    <section className="relative overflow-hidden border-y border-[#2D2212] bg-[#02060B]">
+      {/* Background Glow */}
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(198,169,107,0.08),transparent_70%)]" />
+
+      {/* Grid */}
+      <div className="absolute inset-0 opacity-[0.03] bg-[linear-gradient(to_right,#ffffff_1px,transparent_1px),linear-gradient(to_bottom,#ffffff_1px,transparent_1px)] bg-[size:80px_80px]" />
+
+      <div className="relative z-10 max-w-7xl mx-auto px-6 lg:px-10 py-14">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-y-12 lg:gap-y-0">
+          {stats.map((item, index) => (
             <motion.div
-              key={i}
-              initial={{ opacity: 0, y: 20 }}
+              key={item.id}
+              initial={{ opacity: 0, y: 70 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              transition={{ duration: 0.6, delay: i * 0.1 }}
-              className={`py-10 px-6 lg:px-10 relative group ${
-                i < METRICS.length - 1 ? 'border-r border-[#2E2E36]' : ''
-              } ${i < 2 ? 'border-b border-[#2E2E36] lg:border-b-0' : ''}`}
+              transition={{
+                duration: 0.9,
+                delay: index * 0.2,
+                ease: [0.22, 1, 0.36, 1],
+              }}
+              className={`relative flex flex-col items-center text-center px-6 ${
+                index !== stats.length - 1
+                  ? "lg:border-r border-[#3A2E18]"
+                  : ""
+              }`}
             >
-              {/* Gold top accent on hover */}
-              <div className="absolute top-0 left-0 w-0 h-px bg-[#C9A84C] group-hover:w-full transition-all duration-500" />
+              {/* Hover Glow */}
+              <motion.div
+                whileHover={{
+                  scale: 1.08,
+                  y: -5,
+                }}
+                transition={{
+                  type: "spring",
+                  stiffness: 200,
+                  damping: 15,
+                }}
+                className="relative"
+              >
+                {/* Glow */}
+                <div className="absolute inset-0 blur-3xl bg-[#C6A96B]/20 rounded-full" />
 
-              <div className="font-cinzel text-3xl lg:text-4xl mb-2 gold-text-glow">
-                <AnimatedCounter target={metric.value} suffix={metric.suffix} />
-              </div>
-              <div className="font-inter text-xs text-[#E8E6E0] tracking-wide mb-1 leading-snug">
-                {metric.label}
-              </div>
-              <div className="font-mono text-[9px] text-[#6B6760] tracking-widest uppercase">
-                {metric.sub}
-              </div>
+                {/* Icon */}
+                <motion.div
+                  animate={{
+                    y: [0, -4, 0],
+                  }}
+                  transition={{
+                    duration: 3,
+                    repeat: Infinity,
+                    ease: "easeInOut",
+                  }}
+                  className="relative text-[#C6A96B] text-[34px]"
+                >
+                  {item.icon}
+                </motion.div>
+              </motion.div>
 
-              {/* Bottom accent */}
-              <div className="absolute bottom-0 left-0 w-0 h-px bg-[#C9A84C22] group-hover:w-full transition-all duration-700" />
+              {/* Number */}
+              <motion.h2
+                initial={{ opacity: 0, scale: 0.8 }}
+                whileInView={{ opacity: 1, scale: 1 }}
+                transition={{
+                  duration: 0.8,
+                  delay: 0.2 + index * 0.2,
+                }}
+                className="mt-6 text-[52px] md:text-[70px] leading-none font-light text-[#D4B06A]"
+                style={{
+                  fontFamily: "Cormorant Garamond, serif",
+                }}
+              >
+                {item.number}
+              </motion.h2>
+
+              {/* Title */}
+              <motion.p
+                initial={{ opacity: 0 }}
+                whileInView={{ opacity: 1 }}
+                transition={{
+                  duration: 1,
+                  delay: 0.4 + index * 0.2,
+                }}
+                className="mt-5 text-sm md:text-base tracking-[0.18em] uppercase text-[#E5E5E5]"
+              >
+                {item.title}
+              </motion.p>
+
+              {/* Subtitle */}
+              <motion.p
+                initial={{ opacity: 0 }}
+                whileInView={{ opacity: 1 }}
+                transition={{
+                  duration: 1,
+                  delay: 0.6 + index * 0.2,
+                }}
+                className="mt-2 text-sm md:text-base text-[#9CA3AF] leading-7"
+              >
+                {item.subtitle}
+              </motion.p>
+
+              {/* Animated Divider */}
+              {index !== stats.length - 1 && (
+                <motion.div
+                  initial={{ height: 0 }}
+                  whileInView={{ height: "60%" }}
+                  transition={{
+                    duration: 1,
+                    delay: 0.5 + index * 0.15,
+                  }}
+                  className="hidden lg:block absolute right-0 top-1/2 -translate-y-1/2 w-px bg-gradient-to-b from-transparent via-[#C6A96B]/40 to-transparent"
+                />
+              )}
             </motion.div>
           ))}
         </div>
       </div>
     </section>
-  )
+  );
 }

@@ -22,11 +22,11 @@ const App = () => {
       <main>
         <Hero />
         <CredentialsStrip />
+        <CorridorAtlas />
         <WhatIsSwaqar />
         <ControlPipeline />
         <ControlGate />
         <Participants />
-        <CorridorAtlas />
         <TransactionLifecycle />
         <Governance />
         <GeographyCorridor />

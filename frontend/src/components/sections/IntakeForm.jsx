@@ -1,422 +1,403 @@
-import React, { useState } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
-import SectionLabel from '../ui/SectionLabel'
+import React, { useMemo, useRef, useState, useCallback } from 'react'
+import { motion, useInView } from 'framer-motion'
+import { Lock, CheckCircle2, ArrowRight } from 'lucide-react'
 
-const PARTICIPANT_TYPES = [
-  'Select Participant Category',
-  'Verified Supplier — Africa',
-  'Qualified Buyer — Middle East',
-  'Strategic Investor',
-  'Institutional Partner',
-  'Regulatory Authority',
-  'Development Finance Institution',
-  'Trade Finance Bank',
-  'Other — Specify in Message',
-]
+// Import background image
+import backgroundImage from '../../assets/lightWorldMap.png' // Replace with your image path
 
-const COMMODITY_TYPES = [
-  'Select Commodity / Trade Type',
-  'Agricultural Commodities',
-  'Natural Resources & Extractives',
-  'Manufactured Goods',
-  'Energy Products',
-  'Financial Trade Instruments',
-  'Multi-Commodity Portfolio',
-  'Not Applicable',
-]
-
-const VOLUME_RANGES = [
-  'Select Transaction Volume',
-  'Below USD 1M',
-  'USD 1M — 10M',
-  'USD 10M — 50M',
-  'USD 50M — 250M',
-  'Above USD 250M',
-  'Portfolio / Ongoing',
-]
+/**
+ * Trade Opportunity Intake - Optimized for Performance
+ * - Removed heavy animations that cause lag
+ * - Simplified motion effects
+ * - Optimized re-renders with useCallback
+ * - Reduced backdrop-blur for better performance
+ */
 
 export default function IntakeForm() {
+  const ref = useRef(null)
+  const inView = useInView(ref, { once: true, margin: '-80px', triggerOnce: true })
+
   const [form, setForm] = useState({
-    organizationName: '',
-    contactName: '',
+    fullName: '',
+    org: '',
     email: '',
-    country: '',
-    participantType: '',
-    commodityType: '',
-    volume: '',
-    message: '',
-    honeypot: '', // anti-spam
+    participation: '',
+    phone: '',
+    description: '',
+    website: '',
   })
-  const [errors, setErrors] = useState({})
-  const [status, setStatus] = useState('idle') // idle | loading | success
 
-  const validate = () => {
-    const e = {}
-    if (!form.organizationName.trim()) e.organizationName = 'Required'
-    if (!form.contactName.trim()) e.contactName = 'Required'
-    if (!form.email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) e.email = 'Valid email required'
-    if (!form.country.trim()) e.country = 'Required'
-    if (!form.participantType || form.participantType === PARTICIPANT_TYPES[0]) e.participantType = 'Required'
-    if (!form.volume || form.volume === VOLUME_RANGES[0]) e.volume = 'Required'
-    return e
-  }
+  const benefits = useMemo(
+    () => [
+      'Secure & Confidential',
+      'Reviewed by Institutional Specialists',
+      'Pilot Engagement Available',
+      'Response within 2–3 Business Days',
+    ],
+    []
+  )
 
-  const handleChange = (e) => {
+  const onChange = useCallback((e) => {
     const { name, value } = e.target
-    setForm((f) => ({ ...f, [name]: value }))
-    if (errors[name]) setErrors((er) => ({ ...er, [name]: undefined }))
-  }
+    setForm((s) => ({ ...s, [name]: value }))
+  }, [])
 
-  const handleSubmit = (e) => {
+  const onReset = useCallback(() => {
+    setForm({
+      fullName: '',
+      org: '',
+      email: '',
+      participation: '',
+      phone: '',
+      description: '',
+      website: '',
+    })
+  }, [])
+
+  const onSubmit = useCallback((e) => {
     e.preventDefault()
-    if (form.honeypot) return // anti-spam
-    const e2 = validate()
-    if (Object.keys(e2).length) { setErrors(e2); return }
-    setStatus('loading')
-    setTimeout(() => setStatus('success'), 2000)
-  }
+    if (form.website) return
+    alert('Submitted (demo).')
+  }, [form.website])
 
   return (
-    <section id="intake" className="py-28 lg:py-40 bg-[#141416]">
-      <div className="max-w-[1400px] mx-auto px-6 lg:px-12">
-        <SectionLabel label="Trade Opportunity Intake — SWQ.INT.010" />
+    <section
+      ref={ref}
+      className="relative w-full min-h-screen overflow-hidden will-change-transform"
+    >
+      {/* Background Image - No animations */}
+      <div 
+        className="absolute inset-0 z-0"
+        style={{
+          backgroundImage: `url(${backgroundImage})`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundRepeat: 'no-repeat',
+          backgroundAttachment: 'fixed',
+        }}
+      >
+        <div className="absolute inset-0 bg-black/60" />
+      </div>
 
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          className="mb-16"
-        >
-          <h2 className="font-cinzel text-3xl lg:text-4xl xl:text-5xl text-[#E8E6E0] tracking-wide mb-6 leading-tight">
-            Request a{' '}
-            <em className="font-cormorant italic text-[#C9A84C] not-italic" style={{ fontStyle: 'italic' }}>
-              Pilot Discussion
-            </em>
-          </h2>
-          <p className="font-inter text-sm lg:text-base text-[#6B6760] max-w-2xl leading-relaxed">
-            Complete the institutional intake form to initiate a pilot discussion.
-            All submissions are reviewed by SWAQAR's verification team within 5 business days.
-            Only credentialed institutional counterparties will receive a response.
-          </p>
-        </motion.div>
+      {/* Static grid overlay - No animations */}
+      <div className="pointer-events-none absolute inset-0 z-0 opacity-[0.03]">
+        <div
+          className="absolute inset-0"
+          style={{
+            backgroundImage:
+              'linear-gradient(rgba(201,168,76,0.35) 1px, transparent 1px), linear-gradient(90deg, rgba(201,168,76,0.35) 1px, transparent 1px)',
+            backgroundSize: '70px 70px',
+          }}
+        />
+      </div>
 
-        <div className="grid lg:grid-cols-[1fr,380px] gap-12 xl:gap-20">
-          {/* Form */}
-          <motion.div
-            initial={{ opacity: 0, x: -30 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true }}
+      <div className="relative z-10 mx-auto max-w-[1400px] px-4 sm:px-6 lg:px-10 py-10 md:py-14 lg:py-20">
+        <div className="grid grid-cols-1 lg:grid-cols-[360px_1fr] gap-6 lg:gap-8 xl:gap-10 items-start">
+          {/* LEFT INFO - Minimal animation */}
+          <div
+            className="relative bg-black/70 rounded-xl p-6 border border-white/10 transition-all duration-300 hover:border-white/20"
+            style={{
+              opacity: inView ? 1 : 0,
+              transform: inView ? 'translateX(0)' : 'translateX(-18px)',
+              transition: 'opacity 0.5s ease-out, transform 0.5s ease-out',
+            }}
           >
-            <AnimatePresence mode="wait">
-              {status === 'success' ? (
-                <motion.div
-                  key="success"
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="border border-[#2D5A2D] bg-[#0A140A] p-12 flex flex-col items-center text-center gap-6"
+            <div className="text-[10px] sm:text-[11px] tracking-[0.35em] text-[#C9A84C] font-semibold uppercase mb-3">
+              TRADE OPPORTUNITY INTAKE
+            </div>
+
+            <h2 className="font-serif text-2xl sm:text-3xl lg:text-4xl text-white tracking-wide leading-tight mb-4">
+              Submit a Trade Opportunity
+            </h2>
+
+            <div className="h-px w-14 bg-gradient-to-r from-[#C9A84C] to-transparent mb-5" />
+
+            <p className="text-[12px] sm:text-[13px] text-gray-300 leading-relaxed max-w-sm mb-6">
+              Tell us about your opportunity. Our team will review and respond
+              within 2–3 business days.
+            </p>
+
+            <div className="space-y-3">
+              {benefits.map((b, i) => (
+                <div
+                  key={b}
+                  className="flex items-center gap-3 transition-all duration-300"
+                  style={{
+                    opacity: inView ? 1 : 0,
+                    transform: inView ? 'translateY(0)' : 'translateY(10px)',
+                    transition: `opacity 0.3s ease-out ${0.15 + i * 0.05}s, transform 0.3s ease-out ${0.15 + i * 0.05}s`,
+                  }}
                 >
-                  <div className="w-16 h-16 border border-[#2D5A2D] flex items-center justify-center">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                      <path d="M4 12L9 17L20 7" stroke="#4CAF50" strokeWidth="1.5" />
-                    </svg>
+                  <div className="w-5 h-5 rounded-full border border-[#C9A84C66] bg-[#C9A84C10] grid place-items-center flex-shrink-0">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-[#C9A84C]" />
                   </div>
-                  <div>
-                    <h3 className="font-cinzel text-xl text-[#E8E6E0] mb-3">
-                      Submission Received
-                    </h3>
-                    <p className="font-inter text-sm text-[#6B6760] max-w-md leading-relaxed">
-                      Your institutional intake has been received. SWAQAR's verification
-                      team will review your submission and respond within 5 business days
-                      if your profile meets our engagement criteria.
-                    </p>
+                  <div className="text-[11px] sm:text-[12px] text-gray-200">
+                    {b}
                   </div>
-                  <div className="font-mono text-[9px] text-[#4CAF50] tracking-[0.2em] uppercase">
-                    Reference: SWQ-{Date.now().toString().slice(-8)}
-                  </div>
-                </motion.div>
-              ) : (
-                <motion.form
-                  key="form"
-                  onSubmit={handleSubmit}
-                  noValidate
-                  className="space-y-6"
-                >
-                  {/* Honeypot */}
-                  <input
-                    name="honeypot"
-                    value={form.honeypot}
-                    onChange={handleChange}
-                    className="hidden"
-                    tabIndex="-1"
-                    aria-hidden="true"
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* RIGHT: FORM + SECURITY - Minimal glass effect */}
+          <div
+            className="relative bg-black/70 rounded-xl overflow-hidden border border-white/20 transition-all duration-300 hover:border-white/30"
+            style={{
+              opacity: inView ? 1 : 0,
+              transform: inView ? 'translateY(0)' : 'translateY(18px)',
+              transition: 'opacity 0.5s ease-out 0.1s, transform 0.5s ease-out 0.1s',
+            }}
+          >
+            {/* Static accent line - No animation */}
+            <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#C9A84C]/50 to-transparent" />
+
+            <div className="grid grid-cols-1 xl:grid-cols-[1fr_260px]">
+              {/* FORM */}
+              <form onSubmit={onSubmit} className="p-5 sm:p-6 lg:p-7">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <Field label="Full Name" required>
+                    <Input
+                      name="fullName"
+                      value={form.fullName}
+                      onChange={onChange}
+                      placeholder="Enter your full name"
+                    />
+                  </Field>
+
+                  <Field label="Organization / Company" required>
+                    <Input
+                      name="org"
+                      value={form.org}
+                      onChange={onChange}
+                      placeholder="Enter your organization"
+                    />
+                  </Field>
+
+                  <Field label="Email Address" required>
+                    <Input
+                      type="email"
+                      name="email"
+                      value={form.email}
+                      onChange={onChange}
+                      placeholder="name@company.com"
+                    />
+                  </Field>
+
+                  <Field label="Participation Type" required>
+                    <Select
+                      name="participation"
+                      value={form.participation}
+                      onChange={onChange}
+                      options={[
+                        { value: '', label: 'Select participation type' },
+                        { value: 'supplier', label: 'Supplier / Exporter' },
+                        { value: 'buyer', label: 'Buyer / Importer' },
+                        { value: 'financing', label: 'Financing Partner' },
+                        { value: 'other', label: 'Other' },
+                      ]}
+                    />
+                  </Field>
+
+                  <Field label="Phone Number">
+                    <Input
+                      name="phone"
+                      value={form.phone}
+                      onChange={onChange}
+                      placeholder="Enter phone number (optional)"
+                    />
+                  </Field>
+
+                  <div className="hidden md:block" />
+                </div>
+
+                <Field label="Trade Opportunity Description" required className="mt-4">
+                  <Textarea
+                    name="description"
+                    value={form.description}
+                    onChange={onChange}
+                    placeholder="Describe the products, volumes, counterparties, destination, and any other relevant details..."
+                  />
+                </Field>
+
+                {/* Honeypot */}
+                <div className="hidden">
+                  <Input
+                    name="website"
+                    value={form.website}
+                    onChange={onChange}
+                    placeholder="Website"
                     autoComplete="off"
                   />
+                </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <FormField
-                      label="Organization Name"
-                      name="organizationName"
-                      value={form.organizationName}
-                      onChange={handleChange}
-                      error={errors.organizationName}
-                      placeholder="Legal entity name"
-                    />
-                    <FormField
-                      label="Contact Name"
-                      name="contactName"
-                      value={form.contactName}
-                      onChange={handleChange}
-                      error={errors.contactName}
-                      placeholder="Full name and title"
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <FormField
-                      label="Institutional Email"
-                      name="email"
-                      type="email"
-                      value={form.email}
-                      onChange={handleChange}
-                      error={errors.email}
-                      placeholder="Institutional email address"
-                    />
-                    <FormField
-                      label="Country / Jurisdiction"
-                      name="country"
-                      value={form.country}
-                      onChange={handleChange}
-                      error={errors.country}
-                      placeholder="Country of incorporation"
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <FormSelect
-                      label="Participant Category"
-                      name="participantType"
-                      value={form.participantType}
-                      onChange={handleChange}
-                      error={errors.participantType}
-                      options={PARTICIPANT_TYPES}
-                    />
-                    <FormSelect
-                      label="Commodity / Trade Type"
-                      name="commodityType"
-                      value={form.commodityType}
-                      onChange={handleChange}
-                      options={COMMODITY_TYPES}
-                    />
-                    <FormSelect
-                      label="Transaction Volume"
-                      name="volume"
-                      value={form.volume}
-                      onChange={handleChange}
-                      error={errors.volume}
-                      options={VOLUME_RANGES}
-                    />
-                  </div>
-
-                  <FormTextarea
-                    label="Additional Context"
-                    name="message"
-                    value={form.message}
-                    onChange={handleChange}
-                    placeholder="Describe your trade corridor, counterparty profile, and engagement objectives. More detail accelerates assessment."
-                  />
-
-                  <div className="flex items-start gap-4 pt-2">
-                    <div className="flex-1">
-                      <p className="font-mono text-[8px] text-[#4B4840] tracking-wider leading-relaxed">
-                        By submitting this form, you confirm that you are an authorized
-                        representative of a credentialed institutional entity, and that
-                        all information provided is accurate and complete. SWAQAR reserves
-                        the right to decline engagement without disclosure of reason.
-                      </p>
-                    </div>
-                  </div>
-
+                <div className="mt-5 flex flex-col sm:flex-row items-center justify-end gap-3">
                   <button
-                    type="submit"
-                    disabled={status === 'loading'}
-                    className="group relative w-full md:w-auto border border-[#C9A84C] px-10 py-4 font-mono text-[10px] text-[#C9A84C] tracking-[0.2em] uppercase inline-flex items-center justify-center gap-3 overflow-hidden transition-all duration-300 hover:text-[#0E0E0F] disabled:opacity-50 disabled:cursor-not-allowed"
+                    type="button"
+                    onClick={onReset}
+                    className="h-9 px-4 border border-white/20 text-gray-300 text-[11px] font-medium bg-white/5 hover:bg-white/10 hover:border-white/30 transition-all duration-200 w-full sm:w-auto rounded cursor-pointer"
                   >
-                    <span className="absolute inset-0 bg-[#C9A84C] translate-x-[-101%] group-hover:translate-x-0 transition-transform duration-300 ease-out" />
-                    <span className="relative flex items-center gap-3">
-                      {status === 'loading' ? (
-                        <>
-                          <LoadingDots />
-                          Processing Submission
-                        </>
-                      ) : (
-                        <>
-                          Submit Institutional Intake
-                          <span className="group-hover:translate-x-1 transition-transform duration-300">→</span>
-                        </>
-                      )}
-                    </span>
+                    Reset
                   </button>
-                </motion.form>
-              )}
-            </AnimatePresence>
-          </motion.div>
 
-          {/* Sidebar info */}
-          <motion.div
-            initial={{ opacity: 0, x: 30 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true }}
-            transition={{ delay: 0.3 }}
-            className="space-y-6"
-          >
-            <div className="border border-[#2E2E36] bg-[#0E0E11] p-6">
-              <div className="font-mono text-[9px] text-[#C9A84C] tracking-[0.25em] uppercase mb-5">
-                Engagement Criteria
-              </div>
-              <div className="space-y-4">
-                {[
-                  'Registered institutional entity',
-                  'Verifiable trade credentials',
-                  'Minimum transaction threshold: USD 1M',
-                  'Authorized signatory submission',
-                  'Non-sanctioned jurisdiction',
-                  'Trade-aligned business mandate',
-                ].map((item, i) => (
-                  <div key={i} className="flex items-start gap-3">
-                    <div className="mt-1 w-3 h-3 border border-[#C9A84C33] flex items-center justify-center flex-shrink-0">
-                      <div className="w-1 h-1 bg-[#C9A84C] rounded-full" />
-                    </div>
-                    <span className="font-inter text-xs text-[#6B6760] leading-snug">{item}</span>
+                  <SubmitButton />
+                </div>
+              </form>
+
+              {/* SECURITY PANEL */}
+              <div className="border-t xl:border-t-0 xl:border-l border-white/10 p-6 flex flex-col items-center justify-center bg-black/10">
+                <SecurityLock />
+
+                <div className="mt-4 text-center">
+                  <div className="text-[#C9A84C] text-[10px] tracking-[0.2em] font-semibold mb-2">
+                    Your information is secure
                   </div>
-                ))}
+                  <p className="text-gray-300 text-[10px] leading-relaxed max-w-[220px]">
+                    All submissions are encrypted and handled with strict
+                    confidentiality.
+                  </p>
+                </div>
               </div>
             </div>
-
-            <div className="border border-[#2E2E36] bg-[#0E0E11] p-6">
-              <div className="font-mono text-[9px] text-[#6B6760] tracking-[0.25em] uppercase mb-5">
-                Response Timeline
-              </div>
-              <div className="space-y-3">
-                {[
-                  { label: 'Initial Assessment', time: '1–2 days' },
-                  { label: 'Credential Review', time: '2–3 days' },
-                  { label: 'Response Issued', time: '5 business days' },
-                ].map((item, i) => (
-                  <div key={i} className="flex justify-between items-center border-b border-[#1A1A1A] pb-3">
-                    <span className="font-inter text-xs text-[#6B6760]">{item.label}</span>
-                    <span className="font-mono text-[9px] text-[#C9A84C]">{item.time}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div className="border border-[#2E2E36] p-6">
-              <div className="font-mono text-[9px] text-[#6B6760] tracking-[0.25em] uppercase mb-3">
-                Direct Contact
-              </div>
-              <a
-                href="mailto:intake@swaqar.com"
-                className="font-inter text-xs text-[#C9A84C] hover:text-[#E8C97A] transition-colors"
-              >
-                intake@swaqar.com
-              </a>
-              <div className="mt-2 font-mono text-[8px] text-[#4B4840] tracking-wider">
-                Institutional inquiries only
-              </div>
-            </div>
-          </motion.div>
+          </div>
         </div>
       </div>
     </section>
   )
 }
 
-function FormField({ label, name, type = 'text', value, onChange, error, placeholder }) {
+/* Simple Field component - No animations */
+function Field({ label, required, children, className = '' }) {
   return (
-    <div className="relative group">
-      <label className="block font-mono text-[8px] text-[#6B6760] tracking-[0.2em] uppercase mb-2">
-        {label}
-        {error && <span className="ml-2 text-[#6B2020]">— {error}</span>}
-      </label>
-      <input
-        type={type}
-        name={name}
-        value={value}
-        onChange={onChange}
-        placeholder={placeholder}
-        autoComplete="off"
-        className={`w-full bg-[#0E0E11] border px-4 py-3 font-inter text-sm text-[#E8E6E0] placeholder-[#3D3835] outline-none transition-all duration-300 ${
-          error
-            ? 'border-[#6B2020] focus:border-[#9B3020]'
-            : 'border-[#2E2E36] focus:border-[#C9A84C]'
-        } focus:bg-[#0E0E13]`}
-        aria-invalid={!!error}
-        aria-describedby={error ? `${name}-error` : undefined}
-      />
-    </div>
+    <label className={`block ${className}`}>
+      <div className="flex items-center gap-2 mb-2">
+        <span className="text-[10px] text-gray-200">{label}</span>
+        {required && <span className="text-[10px] text-[#C9A84C]">*</span>}
+      </div>
+      {children}
+    </label>
   )
 }
 
-function FormSelect({ label, name, value, onChange, error, options }) {
+function baseFieldClass() {
+  return `
+    w-full rounded
+    bg-white/10
+    border border-white/20
+    text-white
+    placeholder:text-gray-400
+    outline-none
+    transition-all duration-200
+    focus:border-[#C9A84C]
+    focus:shadow-[0_0_0_2px_rgba(201,168,76,0.2)]
+    text-[11px] sm:text-[12px]
+  `
+}
+
+function Input(props) {
   return (
-    <div>
-      <label className="block font-mono text-[8px] text-[#6B6760] tracking-[0.2em] uppercase mb-2">
-        {label}
-        {error && <span className="ml-2 text-[#6B2020]">— {error}</span>}
-      </label>
-      <select
-        name={name}
-        value={value}
-        onChange={onChange}
-        className={`w-full bg-[#0E0E11] border px-4 py-3 font-inter text-sm text-[#E8E6E0] outline-none transition-all duration-300 appearance-none cursor-pointer ${
-          error
-            ? 'border-[#6B2020] focus:border-[#9B3020]'
-            : 'border-[#2E2E36] focus:border-[#C9A84C]'
-        }`}
-      >
-        {options.map((opt) => (
-          <option
-            key={opt}
-            value={opt}
-            className="bg-[#1A1A1D] text-[#E8E6E0]"
-          >
-            {opt}
-          </option>
-        ))}
-      </select>
-    </div>
+    <input
+      {...props}
+      className={`${baseFieldClass()} h-10 px-3`}
+    />
   )
 }
 
-function FormTextarea({ label, name, value, onChange, placeholder }) {
+function Select({ options, ...props }) {
   return (
-    <div>
-      <label className="block font-mono text-[8px] text-[#6B6760] tracking-[0.2em] uppercase mb-2">
-        {label}
-      </label>
-      <textarea
-        name={name}
-        value={value}
-        onChange={onChange}
-        placeholder={placeholder}
-        rows={5}
-        className="w-full bg-[#0E0E11] border border-[#2E2E36] focus:border-[#C9A84C] px-4 py-3 font-inter text-sm text-[#E8E6E0] placeholder-[#3D3835] outline-none transition-all duration-300 resize-none"
-      />
-    </div>
-  )
-}
-
-function LoadingDots() {
-  return (
-    <span className="flex gap-1">
-      {[0, 1, 2].map((i) => (
-        <motion.span
-          key={i}
-          className="w-1 h-1 rounded-full bg-current"
-          animate={{ opacity: [0.3, 1, 0.3] }}
-          transition={{ duration: 0.8, repeat: Infinity, delay: i * 0.2 }}
-        />
+    <select
+      {...props}
+      className={`${baseFieldClass()} h-10 px-3 appearance-none cursor-pointer bg-white/10`}
+      style={{
+        backgroundImage:
+          "linear-gradient(45deg, transparent 50%, rgba(201,168,76,0.7) 50%), linear-gradient(135deg, rgba(201,168,76,0.7) 50%, transparent 50%)",
+        backgroundPosition: 'calc(100% - 14px) calc(1em + 2px), calc(100% - 9px) calc(1em + 2px)',
+        backgroundSize: '5px 5px, 5px 5px',
+        backgroundRepeat: 'no-repeat',
+      }}
+    >
+      {options.map((o) => (
+        <option key={o.value} value={o.value} className="bg-[#1a1a2e]">
+          {o.label}
+        </option>
       ))}
-    </span>
+    </select>
   )
 }
+
+function Textarea(props) {
+  return (
+    <textarea
+      {...props}
+      rows={5}
+      className={`${baseFieldClass()} px-3 py-3 resize-none`}
+    />
+  )
+}
+
+/* Optimized Submit Button - CSS animations instead of JS */
+function SubmitButton() {
+  return (
+    <button
+      type="submit"
+      className="relative h-9 px-4 pr-3 border border-[#C9A84C] bg-gradient-to-r from-[#C9A84C]/10 to-transparent overflow-hidden group w-full sm:w-auto rounded cursor-pointer transition-all duration-200 hover:from-[#C9A84C] hover:to-[#B78F2D] hover:border-transparent"
+    >
+      <span className="relative z-10 flex items-center justify-center gap-2 text-[11px] font-semibold text-[#C9A84C] group-hover:text-white transition-colors duration-200">
+        Submit Opportunity
+        <ArrowRight className="w-4 h-4" />
+      </span>
+    </button>
+  )
+}
+
+/* Static Security Lock - CSS animations for performance */
+function SecurityLock() {
+  return (
+    <div className="relative w-24 h-24 grid place-items-center">
+      {/* Static rings - CSS animations for better performance */}
+      <div className="absolute inset-0 rounded-full border border-[#C9A84C33] border-dashed animate-[spin_20s_linear_infinite]" />
+      <div className="absolute inset-[10px] rounded-full border border-[#C9A84C55] animate-[spin_14s_linear_infinite_reverse]" />
+      <div className="absolute inset-[18px] rounded-full border border-[#C9A84C66] animate-pulse" />
+
+      {/* lock */}
+      <div className="relative z-10 grid place-items-center">
+        <div className="absolute inset-0 rounded-full bg-[radial-gradient(circle_at_center,rgba(201,168,76,0.22),transparent_70%)] blur-xl" />
+        <Lock className="w-7 h-7 text-[#C9A84C]" />
+      </div>
+
+      {/* orbit dot */}
+      <div className="absolute w-2 h-2 rounded-full bg-[#C9A84C] shadow-[0_0_10px_rgba(201,168,76,0.9)] animate-[spin_6s_linear_infinite]">
+        <div className="absolute w-2 h-2 rounded-full left-10" />
+      </div>
+    </div>
+  )
+}
+
+// Add these keyframe animations to your global CSS or tailwind.config.js
+// You can add this to your index.css or App.css:
+/*
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes spin-reverse {
+  from {
+    transform: rotate(360deg);
+  }
+  to {
+    transform: rotate(0deg);
+  }
+}
+
+.animate-spin-slow {
+  animation: spin 20s linear infinite;
+}
+
+.animate-spin-slower {
+  animation: spin 14s linear infinite reverse;
+}
+*/
