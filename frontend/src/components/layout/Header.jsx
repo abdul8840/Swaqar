@@ -9,15 +9,60 @@ const NAV_LINKS = [
   { label: 'Corridors', href: '#corridors' },
 ]
 
+// Language translations
+const translations = {
+  EN: {
+    systemActive: 'System Active',
+    requestPilot: 'Request Pilot',
+    nav: NAV_LINKS,
+  },
+  AR: {
+    systemActive: 'النظام نشط',
+    requestPilot: 'طلب تجريبي',
+    nav: [
+      { label: 'النظام', href: '#system' },
+      { label: 'خط الأنابيب', href: '#pipeline' },
+      { label: 'المشاركون', href: '#participants' },
+      { label: 'الحوكمة', href: '#governance' },
+      { label: 'الممرات', href: '#corridors' },
+    ],
+  },
+  FR: {
+    systemActive: 'Système Actif',
+    requestPilot: 'Demander un Pilote',
+    nav: [
+      { label: 'Système', href: '#system' },
+      { label: 'Pipeline', href: '#pipeline' },
+      { label: 'Participants', href: '#participants' },
+      { label: 'Gouvernance', href: '#governance' },
+      { label: 'Corridors', href: '#corridors' },
+    ],
+  },
+}
+
 export default function Header() {
   const [scrolled, setScrolled] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
+  const [language, setLanguage] = useState('EN') // Default: EN
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 60)
     window.addEventListener('scroll', onScroll)
     return () => window.removeEventListener('scroll', onScroll)
   }, [])
+
+  const currentLang = translations[language]
+  const currentNavLinks = currentLang.nav
+
+  // Handle language change
+  const handleLanguageChange = (lang) => {
+    setLanguage(lang)
+    setMenuOpen(false)
+  }
+
+  // Get RTL direction for Arabic
+  const isRTL = language === 'AR'
+  const dir = isRTL ? 'rtl' : 'ltr'
 
   return (
     <motion.header
@@ -29,6 +74,7 @@ export default function Header() {
           ? 'bg-[#0E0E0F]/95 backdrop-blur-md border-b border-[#C9A84C22]'
           : 'bg-transparent'
       }`}
+      dir={dir}
     >
       <div className="max-w-[1400px] mx-auto px-6 lg:px-12">
         <div className="flex items-center justify-between h-16 lg:h-20">
@@ -58,7 +104,7 @@ export default function Header() {
 
           {/* Desktop Nav */}
           <nav className="hidden lg:flex items-center gap-8">
-            {NAV_LINKS.map((link) => (
+            {currentNavLinks.map((link) => (
               <a
                 key={link.href}
                 href={link.href}
@@ -70,24 +116,34 @@ export default function Header() {
             ))}
           </nav>
 
-          {/* CTA */}
+          {/* CTA and Language Selector */}
           <div className="hidden lg:flex items-center gap-4">
-            <div className="flex items-center gap-2">
-              <motion.div
-                className="w-1.5 h-1.5 rounded-full bg-[#4CAF50]"
-                animate={{ opacity: [1, 0.4, 1] }}
-                transition={{ duration: 1.5, repeat: Infinity }}
-              />
-              <span className="font-mono text-[9px] text-[#6B6760] tracking-widest uppercase">
-                System Active
-              </span>
+            {/* Language Selector */}
+            <div className="flex items-center gap-1 bg-[#1A1A1F] rounded border border-[#2E2E36] px-1 py-0.5">
+              {['EN', 'AR', 'FR'].map((lang) => (
+                <button
+                  key={lang}
+                  onClick={() => handleLanguageChange(lang)}
+                  className={`px-2 py-1 text-[10px] font-mono font-semibold tracking-wider rounded transition-all duration-200 ${
+                    language === lang
+                      ? 'bg-[#C9A84C] text-[#0E0E0F]'
+                      : 'text-[#A8A49C] hover:text-[#C9A84C]'
+                  }`}
+                >
+                  {lang}
+                </button>
+              ))}
             </div>
+
+            {/* CTA Button */}
             <a
               href="#intake"
               className="border border-[#C9A84C] px-5 py-2 font-mono text-[10px] text-[#C9A84C] tracking-[0.15em] uppercase hover:bg-[#C9A84C11] transition-all duration-300 group"
             >
-              Request Pilot
-              <span className="ml-1 opacity-0 group-hover:opacity-100 transition-opacity">→</span>
+              {currentLang.requestPilot}
+              <span className="ml-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                {isRTL ? '←' : '→'}
+              </span>
             </a>
           </div>
 
@@ -115,9 +171,10 @@ export default function Header() {
             exit={{ height: 0, opacity: 0 }}
             transition={{ duration: 0.3 }}
             className="lg:hidden bg-[#0E0E0F] border-b border-[#2E2E36] overflow-hidden"
+            dir={dir}
           >
             <div className="px-6 py-6 flex flex-col gap-4">
-              {NAV_LINKS.map((link) => (
+              {currentNavLinks.map((link) => (
                 <a
                   key={link.href}
                   href={link.href}
@@ -127,12 +184,36 @@ export default function Header() {
                   {link.label}
                 </a>
               ))}
+              
+              {/* Language Selector in Mobile */}
+              <div className="flex items-center gap-2 mt-2 pt-2 border-t border-[#2E2E36]">
+                <span className="text-[10px] text-[#6B6760] font-mono tracking-wider uppercase">
+                  Language:
+                </span>
+                <div className="flex items-center gap-1 bg-[#1A1A1F] rounded border border-[#2E2E36] px-1 py-0.5">
+                  {['EN', 'AR', 'FR'].map((lang) => (
+                    <button
+                      key={lang}
+                      onClick={() => handleLanguageChange(lang)}
+                      className={`px-2 py-1 text-[10px] font-mono font-semibold tracking-wider rounded transition-all duration-200 ${
+                        language === lang
+                          ? 'bg-[#C9A84C] text-[#0E0E0F]'
+                          : 'text-[#A8A49C] hover:text-[#C9A84C]'
+                      }`}
+                    >
+                      {lang}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Mobile CTA Button */}
               <a
                 href="#intake"
                 onClick={() => setMenuOpen(false)}
                 className="mt-2 border border-[#C9A84C] px-5 py-3 font-mono text-[10px] text-[#C9A84C] tracking-[0.15em] uppercase text-center"
               >
-                Request Pilot
+                {currentLang.requestPilot}
               </a>
             </div>
           </motion.div>

@@ -291,7 +291,7 @@ export default function Hero() {
       {/* ════════════════════════════════════════════════════
           LAYOUT: Two columns - Responsive
       ════════════════════════════════════════════════════ */}
-      <div className="flex flex-col lg:flex-row min-h-screen">
+      <div className="flex flex-col lg:flex-row min-h-screen mt-12">
 
         {/* ══ LEFT COLUMN — Content ══ */}
         <div
